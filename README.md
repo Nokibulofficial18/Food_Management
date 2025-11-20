@@ -8,7 +8,7 @@
 
 This platform helps users manage their food inventory, track consumption patterns, reduce food waste, and access sustainability resources. Built with modern web technologies following MVC architecture and best practices.
 
-## Live Link: https://food-manageme-git-2d5440-nokibul-hasan-mojumder-tasirs-projects.vercel.app?_vercel_share=K144m4sPatEhs1eh3AqWIZZygFEYqzRG
+## Live Link: https://food-management-56c86.web.app/dashboard
 
 ## ✨ Features
 
