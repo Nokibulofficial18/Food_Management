@@ -11,18 +11,96 @@ const Register = () => {
     location: ''
   });
   const [error, setError] = useState('');
+  const [validationErrors, setValidationErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
 
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePassword = (password) => {
+    const errors = [];
+    if (password.length < 8) errors.push('at least 8 characters');
+    if (!/[A-Z]/.test(password)) errors.push('one uppercase letter');
+    if (!/[a-z]/.test(password)) errors.push('one lowercase letter');
+    if (!/[0-9]/.test(password)) errors.push('one number');
+    if (!/[!@#$%^&*]/.test(password)) errors.push('one special character (!@#$%^&*)');
+    return errors;
+  };
+
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    
+    // Clear validation errors for this field
+    setValidationErrors({ ...validationErrors, [name]: null });
+    setError('');
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    const errors = { ...validationErrors };
+
+    if (name === 'email' && value && !validateEmail(value)) {
+      errors.email = 'Please enter a valid email address';
+    }
+
+    if (name === 'password' && value) {
+      const passwordErrors = validatePassword(value);
+      if (passwordErrors.length > 0) {
+        errors.password = `Password must contain ${passwordErrors.join(', ')}`;
+      }
+    }
+
+    if (name === 'fullName' && value && value.trim().length < 2) {
+      errors.fullName = 'Full name must be at least 2 characters';
+    }
+
+    setValidationErrors(errors);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    
+    // Validate all fields before submission
+    const errors = {};
+    
+    if (!formData.fullName.trim()) {
+      errors.fullName = 'Full name is required';
+    } else if (formData.fullName.trim().length < 2) {
+      errors.fullName = 'Full name must be at least 2 characters';
+    }
+
+    if (!formData.email) {
+      errors.email = 'Email is required';
+    } else if (!validateEmail(formData.email)) {
+      errors.email = 'Please enter a valid email address';
+    }
+
+    if (!formData.password) {
+      errors.password = 'Password is required';
+    } else {
+      const passwordErrors = validatePassword(formData.password);
+      if (passwordErrors.length > 0) {
+        errors.password = `Password must contain ${passwordErrors.join(', ')}`;
+      }
+    }
+
+    if (formData.householdSize < 1) {
+      errors.householdSize = 'Household size must be at least 1';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      setError('Please fix the errors below before submitting');
+      return;
+    }
+
     setLoading(true);
 
     const result = await register(formData);
@@ -30,60 +108,98 @@ const Register = () => {
     if (result.success) {
       navigate('/dashboard');
     } else {
-      setError(result.error);
+      setError(result.error || 'Registration failed. Please try again.');
     }
     
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 px-4 py-8">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-xl p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-primary-100 to-green-50 px-4 py-8">
+      <div className="max-w-md w-full">
+        {/* Logo Section */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Create Account</h1>
-          <p className="text-gray-600 mt-2">Join our sustainable food community</p>
+          <div className="inline-block p-4 bg-white rounded-full shadow-lg mb-4">
+            <span className="text-5xl">🌱</span>
+          </div>
+          <h1 className="text-4xl font-bold text-gray-900">Join FoodSaver</h1>
+          <p className="text-gray-600 mt-2">Start your sustainable journey</p>
         </div>
 
+        <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Create Account</h2>
+            <p className="text-gray-600 mt-2">Join our sustainable food community</p>
+          </div>
+
         {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4">
-            {error}
+          <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-lg mb-4">
+            <div className="flex items-start gap-2">
+              <svg className="w-5 h-5 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <span>{error}</span>
+            </div>
           </div>
         )}
+
+        {/* Password Requirements Info */}
+        <div className="bg-blue-50 border border-blue-200 text-blue-700 p-4 rounded-lg mb-4">
+          <h3 className="font-semibold mb-2 flex items-center gap-2">
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+            Registration Requirements
+          </h3>
+          <ul className="text-sm space-y-1 ml-7">
+            <li>• Valid email address</li>
+            <li>• Password: 8+ characters, uppercase, lowercase, number, special character</li>
+            <li>• Full name (at least 2 characters)</li>
+          </ul>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Full Name
+              Full Name <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               name="fullName"
               value={formData.fullName}
               onChange={handleChange}
+              onBlur={handleBlur}
               required
-              className="input-field"
+              className={`input-field ${validationErrors.fullName ? 'border-red-500 focus:ring-red-500' : ''}`}
               placeholder="John Doe"
             />
+            {validationErrors.fullName && (
+              <p className="mt-1 text-sm text-red-600">{validationErrors.fullName}</p>
+            )}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
+              Email <span className="text-red-500">*</span>
             </label>
             <input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
+              onBlur={handleBlur}
               required
-              className="input-field"
+              className={`input-field ${validationErrors.email ? 'border-red-500 focus:ring-red-500' : ''}`}
               placeholder="you@example.com"
             />
+            {validationErrors.email && (
+              <p className="mt-1 text-sm text-red-600">{validationErrors.email}</p>
+            )}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password
+              Password <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <input
@@ -91,9 +207,9 @@ const Register = () => {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 required
-                minLength={6}
-                className="input-field pr-10"
+                className={`input-field pr-10 ${validationErrors.password ? 'border-red-500 focus:ring-red-500' : ''}`}
                 placeholder="••••••••"
               />
               <button
@@ -113,11 +229,14 @@ const Register = () => {
                 )}
               </button>
             </div>
+            {validationErrors.password && (
+              <p className="mt-1 text-sm text-red-600">{validationErrors.password}</p>
+            )}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Household Size
+              Household Size <span className="text-red-500">*</span>
             </label>
             <input
               type="number"
@@ -125,8 +244,12 @@ const Register = () => {
               value={formData.householdSize}
               onChange={handleChange}
               min={1}
-              className="input-field"
+              required
+              className={`input-field ${validationErrors.householdSize ? 'border-red-500 focus:ring-red-500' : ''}`}
             />
+            {validationErrors.householdSize && (
+              <p className="mt-1 text-sm text-red-600">{validationErrors.householdSize}</p>
+            )}
           </div>
 
           <div>
@@ -146,9 +269,19 @@ const Register = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full btn-primary disabled:opacity-50"
+            className="w-full btn-primary disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {loading ? 'Creating account...' : 'Sign Up'}
+            {loading ? (
+              <>
+                <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Creating account...
+              </>
+            ) : (
+              'Sign Up'
+            )}
           </button>
         </form>
 
@@ -158,6 +291,7 @@ const Register = () => {
             Sign in
           </Link>
         </p>
+      </div>
       </div>
     </div>
   );

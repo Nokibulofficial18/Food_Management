@@ -6,6 +6,7 @@ import Resource from '../models/Resource.js';
 dotenv.config();
 
 const foodItems = [
+  // Fruits
   {
     name: 'Apple',
     category: 'fruit',
@@ -23,77 +24,31 @@ const foodItems = [
     description: 'Ripe yellow bananas'
   },
   {
-    name: 'Milk',
-    category: 'dairy',
-    typicalExpirationDays: 7,
-    costPerUnit: 3.50,
-    unit: 'liter',
-    description: 'Fresh whole milk'
-  },
-  {
-    name: 'Cheddar Cheese',
-    category: 'dairy',
-    typicalExpirationDays: 30,
-    costPerUnit: 5.00,
-    unit: 'pound',
-    description: 'Sharp cheddar cheese'
-  },
-  {
-    name: 'Yogurt',
-    category: 'dairy',
+    name: 'Orange',
+    category: 'fruit',
     typicalExpirationDays: 14,
-    costPerUnit: 1.20,
-    unit: 'cup',
-    description: 'Greek yogurt'
+    costPerUnit: 0.60,
+    unit: 'piece',
+    description: 'Fresh oranges'
   },
   {
-    name: 'Chicken Breast',
-    category: 'protein',
-    typicalExpirationDays: 3,
-    costPerUnit: 8.00,
-    unit: 'pound',
-    description: 'Boneless chicken breast'
-  },
-  {
-    name: 'Ground Beef',
-    category: 'protein',
-    typicalExpirationDays: 2,
-    costPerUnit: 6.50,
-    unit: 'pound',
-    description: 'Lean ground beef'
-  },
-  {
-    name: 'Eggs',
-    category: 'protein',
-    typicalExpirationDays: 21,
-    costPerUnit: 4.00,
-    unit: 'dozen',
-    description: 'Large eggs'
-  },
-  {
-    name: 'White Bread',
-    category: 'grain',
-    typicalExpirationDays: 7,
-    costPerUnit: 2.50,
-    unit: 'loaf',
-    description: 'Sliced white bread'
-  },
-  {
-    name: 'Brown Rice',
-    category: 'grain',
-    typicalExpirationDays: 180,
+    name: 'Strawberries',
+    category: 'fruit',
+    typicalExpirationDays: 5,
     costPerUnit: 3.00,
     unit: 'pound',
-    description: 'Long grain brown rice'
+    description: 'Fresh strawberries'
   },
   {
-    name: 'Pasta',
-    category: 'grain',
-    typicalExpirationDays: 365,
-    costPerUnit: 1.50,
+    name: 'Grapes',
+    category: 'fruit',
+    typicalExpirationDays: 10,
+    costPerUnit: 2.50,
     unit: 'pound',
-    description: 'Dried spaghetti pasta'
+    description: 'Seedless grapes'
   },
+
+  // Vegetables
   {
     name: 'Carrots',
     category: 'vegetable',
@@ -127,6 +82,166 @@ const foodItems = [
     description: 'Romaine lettuce'
   },
   {
+    name: 'Potatoes',
+    category: 'vegetable',
+    typicalExpirationDays: 30,
+    costPerUnit: 0.75,
+    unit: 'pound',
+    description: 'Russet potatoes'
+  },
+  {
+    name: 'Onions',
+    category: 'vegetable',
+    typicalExpirationDays: 30,
+    costPerUnit: 0.50,
+    unit: 'pound',
+    description: 'Yellow onions'
+  },
+  {
+    name: 'Bell Peppers',
+    category: 'vegetable',
+    typicalExpirationDays: 10,
+    costPerUnit: 1.25,
+    unit: 'piece',
+    description: 'Fresh bell peppers'
+  },
+
+  // Dairy Products
+  {
+    name: 'Milk',
+    category: 'dairy',
+    typicalExpirationDays: 7,
+    costPerUnit: 3.50,
+    unit: 'liter',
+    description: 'Fresh whole milk'
+  },
+  {
+    name: 'Cheddar Cheese',
+    category: 'dairy',
+    typicalExpirationDays: 30,
+    costPerUnit: 5.00,
+    unit: 'pound',
+    description: 'Sharp cheddar cheese'
+  },
+  {
+    name: 'Yogurt',
+    category: 'dairy',
+    typicalExpirationDays: 14,
+    costPerUnit: 1.20,
+    unit: 'cup',
+    description: 'Greek yogurt'
+  },
+  {
+    name: 'Butter',
+    category: 'dairy',
+    typicalExpirationDays: 90,
+    costPerUnit: 4.50,
+    unit: 'pound',
+    description: 'Salted butter'
+  },
+  {
+    name: 'Sour Cream',
+    category: 'dairy',
+    typicalExpirationDays: 21,
+    costPerUnit: 2.50,
+    unit: 'container',
+    description: 'Sour cream'
+  },
+
+  // Proteins
+  {
+    name: 'Chicken Breast',
+    category: 'protein',
+    typicalExpirationDays: 3,
+    costPerUnit: 8.00,
+    unit: 'pound',
+    description: 'Boneless chicken breast'
+  },
+  {
+    name: 'Ground Beef',
+    category: 'protein',
+    typicalExpirationDays: 2,
+    costPerUnit: 6.50,
+    unit: 'pound',
+    description: 'Lean ground beef'
+  },
+  {
+    name: 'Eggs',
+    category: 'protein',
+    typicalExpirationDays: 21,
+    costPerUnit: 4.00,
+    unit: 'dozen',
+    description: 'Large eggs'
+  },
+  {
+    name: 'Salmon Fillet',
+    category: 'protein',
+    typicalExpirationDays: 2,
+    costPerUnit: 12.00,
+    unit: 'pound',
+    description: 'Fresh salmon fillet'
+  },
+  {
+    name: 'Bacon',
+    category: 'protein',
+    typicalExpirationDays: 14,
+    costPerUnit: 6.00,
+    unit: 'package',
+    description: 'Smoked bacon'
+  },
+  {
+    name: 'Tofu',
+    category: 'protein',
+    typicalExpirationDays: 30,
+    costPerUnit: 3.00,
+    unit: 'package',
+    description: 'Firm tofu'
+  },
+
+  // Grains & Bread
+  {
+    name: 'White Bread',
+    category: 'grain',
+    typicalExpirationDays: 7,
+    costPerUnit: 2.50,
+    unit: 'loaf',
+    description: 'Sliced white bread'
+  },
+  {
+    name: 'Brown Rice',
+    category: 'grain',
+    typicalExpirationDays: 180,
+    costPerUnit: 3.00,
+    unit: 'pound',
+    description: 'Long grain brown rice'
+  },
+  {
+    name: 'Pasta',
+    category: 'grain',
+    typicalExpirationDays: 365,
+    costPerUnit: 1.50,
+    unit: 'pound',
+    description: 'Dried spaghetti pasta'
+  },
+  {
+    name: 'Oatmeal',
+    category: 'grain',
+    typicalExpirationDays: 365,
+    costPerUnit: 4.00,
+    unit: 'package',
+    description: 'Rolled oats'
+  },
+  {
+    name: 'Tortillas',
+    category: 'grain',
+    typicalExpirationDays: 14,
+    costPerUnit: 3.00,
+    unit: 'package',
+    description: 'Flour tortillas'
+  },
+
+  // Beverages
+  {
     name: 'Orange Juice',
     category: 'beverage',
     typicalExpirationDays: 10,
@@ -142,6 +257,16 @@ const foodItems = [
     unit: 'pack',
     description: '24-pack bottled water'
   },
+  {
+    name: 'Coffee',
+    category: 'beverage',
+    typicalExpirationDays: 180,
+    costPerUnit: 8.00,
+    unit: 'bag',
+    description: 'Ground coffee'
+  },
+
+  // Snacks
   {
     name: 'Potato Chips',
     category: 'snack',
@@ -159,12 +284,54 @@ const foodItems = [
     description: 'Chewy granola bars'
   },
   {
-    name: 'Strawberries',
-    category: 'fruit',
-    typicalExpirationDays: 5,
+    name: 'Crackers',
+    category: 'snack',
+    typicalExpirationDays: 90,
     costPerUnit: 3.00,
-    unit: 'pound',
-    description: 'Fresh strawberries'
+    unit: 'box',
+    description: 'Whole wheat crackers'
+  },
+  {
+    name: 'Peanut Butter',
+    category: 'snack',
+    typicalExpirationDays: 180,
+    costPerUnit: 5.00,
+    unit: 'jar',
+    description: 'Creamy peanut butter'
+  },
+
+  // Condiments & Others
+  {
+    name: 'Ketchup',
+    category: 'other',
+    typicalExpirationDays: 180,
+    costPerUnit: 2.50,
+    unit: 'bottle',
+    description: 'Tomato ketchup'
+  },
+  {
+    name: 'Mayonnaise',
+    category: 'other',
+    typicalExpirationDays: 120,
+    costPerUnit: 3.50,
+    unit: 'jar',
+    description: 'Mayonnaise'
+  },
+  {
+    name: 'Olive Oil',
+    category: 'other',
+    typicalExpirationDays: 365,
+    costPerUnit: 8.00,
+    unit: 'bottle',
+    description: 'Extra virgin olive oil'
+  },
+  {
+    name: 'Canned Beans',
+    category: 'other',
+    typicalExpirationDays: 730,
+    costPerUnit: 1.50,
+    unit: 'can',
+    description: 'Black beans'
   }
 ];
 

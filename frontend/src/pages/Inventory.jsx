@@ -5,6 +5,8 @@ const Inventory = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [countdown, setCountdown] = useState({});
   const [formData, setFormData] = useState({
     itemName: '',
     category: 'other',
@@ -16,6 +18,31 @@ const Inventory = () => {
   useEffect(() => {
     loadInventory();
   }, []);
+
+  useEffect(() => {
+    // Update countdown every second
+    const timer = setInterval(() => {
+      const newCountdown = {};
+      items.forEach(item => {
+        const now = new Date();
+        const expDate = new Date(item.expirationDate);
+        const diff = expDate - now;
+        
+        if (diff > 0) {
+          const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+          const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+          const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+          newCountdown[item._id] = { days, hours, minutes, seconds, expired: false };
+        } else {
+          newCountdown[item._id] = { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true };
+        }
+      });
+      setCountdown(newCountdown);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [items]);
 
   const loadInventory = async () => {
     try {
@@ -51,10 +78,25 @@ const Inventory = () => {
     }
   };
 
-  const getExpirationStatus = (expirationDate, daysUntil) => {
-    if (daysUntil < 0) return { color: 'text-red-600', label: 'Expired' };
-    if (daysUntil <= 3) return { color: 'text-yellow-600', label: `${daysUntil}d left` };
-    return { color: 'text-green-600', label: `${daysUntil}d left` };
+  const getExpirationStatus = (daysUntil) => {
+    if (daysUntil < 0) return { color: 'bg-red-100 text-red-800 border-red-300', icon: '⚠️', label: 'Expired' };
+    if (daysUntil <= 3) return { color: 'bg-yellow-100 text-yellow-800 border-yellow-300', icon: '⏰', label: 'Expiring Soon' };
+    if (daysUntil <= 7) return { color: 'bg-orange-100 text-orange-800 border-orange-300', icon: '📅', label: 'Use Soon' };
+    return { color: 'bg-green-100 text-green-800 border-green-300', icon: '✓', label: 'Fresh' };
+  };
+
+  const getCategoryEmoji = (category) => {
+    const emojis = {
+      fruit: '🍎',
+      vegetable: '🥕',
+      dairy: '🥛',
+      grain: '🌾',
+      protein: '🍗',
+      beverage: '🥤',
+      snack: '🍿',
+      other: '📦'
+    };
+    return emojis[category] || '📦';
   };
 
   if (loading) {
@@ -157,33 +199,83 @@ const Inventory = () => {
       <div className="card">
         {items.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {items.map((item) => {
-              const status = getExpirationStatus(item.expirationDate, item.daysUntilExpiration);
+            {items.map((item, index) => {
+              const status = getExpirationStatus(item.daysUntilExpiration);
+              const timer = countdown[item._id] || { days: 0, hours: 0, minutes: 0, seconds: 0, expired: false };
               return (
-                <div key={item._id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-semibold text-gray-900">{item.itemName}</h3>
-                    <button
-                      onClick={() => handleDelete(item._id)}
-                      className="text-red-600 hover:text-red-700 text-sm"
-                    >
-                      ✕
-                    </button>
+                <div 
+                  key={item._id} 
+                  className="group relative p-5 bg-gradient-to-br from-white to-gray-50 rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                  onClick={() => setSelectedItem(item)}
+                >
+                  {/* Category Badge */}
+                  <div className="absolute top-3 right-3 text-3xl opacity-20 group-hover:opacity-40 transition-opacity">
+                    {getCategoryEmoji(item.category)}
                   </div>
-                  <div className="space-y-1 text-sm">
-                    <p className="text-gray-600">
-                      Quantity: <span className="font-medium">{item.quantity}</span>
-                    </p>
-                    <p className="text-gray-600">
-                      Category: <span className="font-medium">{item.category}</span>
-                    </p>
-                    <p className={status.color}>
-                      <span className="font-medium">{status.label}</span>
-                    </p>
-                    {item.notes && (
-                      <p className="text-gray-500 mt-2">{item.notes}</p>
-                    )}
+                  
+                  <div className="mb-3">
+                    <h3 className="font-bold text-lg text-gray-900 mb-1 flex items-center gap-2">
+                      {getCategoryEmoji(item.category)}
+                      {item.itemName}
+                    </h3>
+                    <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-full border ${status.color}`}>
+                      {status.icon} {status.label}
+                    </span>
                   </div>
+
+                  {/* Countdown Timer */}
+                  {!timer.expired ? (
+                    <div className="grid grid-cols-4 gap-2 mb-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-blue-600">{timer.days}</div>
+                        <div className="text-xs text-gray-600">Days</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-blue-600">{timer.hours}</div>
+                        <div className="text-xs text-gray-600">Hrs</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-blue-600">{timer.minutes}</div>
+                        <div className="text-xs text-gray-600">Min</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-blue-600">{timer.seconds}</div>
+                        <div className="text-xs text-gray-600">Sec</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mb-3 p-3 bg-red-50 rounded-lg border border-red-200 text-center">
+                      <span className="text-red-600 font-bold">⚠️ EXPIRED</span>
+                    </div>
+                  )}
+
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Quantity:</span>
+                      <span className="font-semibold text-gray-900">{item.quantity} units</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Expires:</span>
+                      <span className="font-medium text-gray-700">{new Date(item.expirationDate).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+
+                  {/* Hover Indicator */}
+                  <div className="mt-3 pt-3 border-t border-gray-200 text-center text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                    Click for details
+                  </div>
+
+                  {/* Delete Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(item._id);
+                    }}
+                    className="absolute top-3 left-3 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center shadow-lg"
+                  >
+                    ✕
+                  </button>
                 </div>
               );
             })}
@@ -192,6 +284,111 @@ const Inventory = () => {
           <p className="text-gray-500 text-center py-8">No inventory items yet. Add your first item!</p>
         )}
       </div>
+
+      {/* Detail Modal */}
+      {selectedItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedItem(null)}>
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl transform transition-all" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <span className="text-5xl">{getCategoryEmoji(selectedItem.category)}</span>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">{selectedItem.itemName}</h2>
+                  <span className="text-sm text-gray-500 capitalize">{selectedItem.category}</span>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedItem(null)}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Status Badge */}
+              <div className={`p-4 rounded-lg border-2 ${getExpirationStatus(selectedItem.daysUntilExpiration).color}`}>
+                <div className="text-center">
+                  <div className="text-3xl mb-2">{getExpirationStatus(selectedItem.daysUntilExpiration).icon}</div>
+                  <div className="font-bold text-lg">{getExpirationStatus(selectedItem.daysUntilExpiration).label}</div>
+                </div>
+              </div>
+
+              {/* Live Countdown */}
+              {countdown[selectedItem._id] && !countdown[selectedItem._id].expired && (
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border-2 border-blue-200">
+                  <div className="text-center mb-2 text-sm font-semibold text-gray-700">Time Until Expiration</div>
+                  <div className="grid grid-cols-4 gap-3">
+                    <div className="bg-white p-3 rounded-lg shadow">
+                      <div className="text-2xl font-bold text-blue-600">{countdown[selectedItem._id].days}</div>
+                      <div className="text-xs text-gray-600">Days</div>
+                    </div>
+                    <div className="bg-white p-3 rounded-lg shadow">
+                      <div className="text-2xl font-bold text-blue-600">{countdown[selectedItem._id].hours}</div>
+                      <div className="text-xs text-gray-600">Hours</div>
+                    </div>
+                    <div className="bg-white p-3 rounded-lg shadow">
+                      <div className="text-2xl font-bold text-blue-600">{countdown[selectedItem._id].minutes}</div>
+                      <div className="text-xs text-gray-600">Minutes</div>
+                    </div>
+                    <div className="bg-white p-3 rounded-lg shadow">
+                      <div className="text-2xl font-bold text-blue-600">{countdown[selectedItem._id].seconds}</div>
+                      <div className="text-xs text-gray-600">Seconds</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Details */}
+              <div className="space-y-3">
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <span className="text-gray-600 font-medium">Quantity</span>
+                  <span className="font-bold text-gray-900">{selectedItem.quantity} units</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <span className="text-gray-600 font-medium">Expiration Date</span>
+                  <span className="font-bold text-gray-900">{new Date(selectedItem.expirationDate).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <span className="text-gray-600 font-medium">Days Until Expiration</span>
+                  <span className="font-bold text-gray-900">{selectedItem.daysUntilExpiration} days</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <span className="text-gray-600 font-medium">Added On</span>
+                  <span className="font-bold text-gray-900">{new Date(selectedItem.dateAdded).toLocaleDateString()}</span>
+                </div>
+              </div>
+
+              {/* Notes */}
+              {selectedItem.notes && (
+                <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                  <div className="font-semibold text-gray-700 mb-1">📝 Notes</div>
+                  <p className="text-gray-600 text-sm">{selectedItem.notes}</p>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => {
+                    setSelectedItem(null);
+                    handleDelete(selectedItem._id);
+                  }}
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+                >
+                  🗑️ Delete Item
+                </button>
+                <button
+                  onClick={() => setSelectedItem(null)}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-4 rounded-lg transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
