@@ -3,9 +3,12 @@
 > **Part 1 - Non-AI Base Implementation**  
 > A comprehensive MERN stack web application for managing food inventory, tracking consumption, and promoting sustainable food practices.
 
+
 ## 📋 Overview
 
 This platform helps users manage their food inventory, track consumption patterns, reduce food waste, and access sustainability resources. Built with modern web technologies following MVC architecture and best practices.
+
+## Live Link: https://food-manageme-git-2d5440-nokibul-hasan-mojumder-tasirs-projects.vercel.app?_vercel_share=K144m4sPatEhs1eh3AqWIZZygFEYqzRG
 
 ## ✨ Features
 
@@ -426,10 +429,4 @@ This project is part of the BUBT InnovateX Hackathon submission.
 - Food sustainability resources and research
 - Open-source community
 
-## 📞 Support
 
-For issues or questions, please open an issue in the repository.
-
----
-
-**Built with ❤️ for sustainable food management**
