@@ -514,14 +514,21 @@ const seedDatabase = async () => {
     await InventoryItem.deleteMany({});
     console.log('🗑️  Cleared existing data');
 
-    // Create demo user
-    const hashedPassword = await bcrypt.hash('Demo@123', 10);
+    // Create demo users
     const demoUser = await User.create({
       fullName: 'Demo User',
       email: 'demo@example.com',
-      password: hashedPassword
+      password: 'demo123'  // Will be hashed by the pre-save hook
     });
-    console.log('✅ Created demo user (email: demo@example.com, password: Demo@123)');
+    console.log('✅ Created demo user (email: demo@example.com, password: demo123)');
+
+    // Create another test user
+    await User.create({
+      fullName: 'Test User',
+      email: 'test@example.com',
+      password: 'Test@123'  // Will be hashed by the pre-save hook
+    });
+    console.log('✅ Created test user (email: test@example.com, password: Test@123)');
 
     // Insert food items
     await FoodItem.insertMany(foodItems);
@@ -677,7 +684,9 @@ const seedDatabase = async () => {
     console.log(`✅ Inserted ${sampleInventory.length} inventory items for demo user`);
 
     console.log('🎉 Database seeded successfully!');
-    console.log('📧 Demo login: demo@example.com / Demo@123');
+    console.log('📧 Login credentials:');
+    console.log('   demo@example.com / demo123');
+    console.log('   test@example.com / Test@123');
     process.exit(0);
   } catch (error) {
     console.error('Error seeding database:', error);
