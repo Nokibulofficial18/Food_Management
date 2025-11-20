@@ -1,7 +1,10 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import bcrypt from 'bcryptjs';
 import FoodItem from '../models/FoodItem.js';
 import Resource from '../models/Resource.js';
+import User from '../models/User.js';
+import InventoryItem from '../models/InventoryItem.js';
 
 dotenv.config();
 
@@ -507,7 +510,18 @@ const seedDatabase = async () => {
     // Clear existing data
     await FoodItem.deleteMany({});
     await Resource.deleteMany({});
+    await User.deleteMany({});
+    await InventoryItem.deleteMany({});
     console.log('🗑️  Cleared existing data');
+
+    // Create demo user
+    const hashedPassword = await bcrypt.hash('Demo@123', 10);
+    const demoUser = await User.create({
+      fullName: 'Demo User',
+      email: 'demo@example.com',
+      password: hashedPassword
+    });
+    console.log('✅ Created demo user (email: demo@example.com, password: Demo@123)');
 
     // Insert food items
     await FoodItem.insertMany(foodItems);
@@ -517,10 +531,156 @@ const seedDatabase = async () => {
     await Resource.insertMany(resources);
     console.log(`✅ Inserted ${resources.length} resources`);
 
+    // Create sample inventory items for demo user
+    const today = new Date();
+    const sampleInventory = [
+      {
+        userId: demoUser._id,
+        itemName: 'Fresh Milk',
+        category: 'dairy',
+        quantity: 2,
+        purchaseDate: new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+        expirationDate: new Date(today.getTime() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
+        notes: 'Store in refrigerator'
+      },
+      {
+        userId: demoUser._id,
+        itemName: 'Chicken Breast',
+        category: 'protein',
+        quantity: 1.5,
+        purchaseDate: today,
+        expirationDate: new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
+        notes: 'Use soon or freeze'
+      },
+      {
+        userId: demoUser._id,
+        itemName: 'Apples',
+        category: 'fruit',
+        quantity: 6,
+        purchaseDate: new Date(today.getTime() - 3 * 24 * 60 * 60 * 1000),
+        expirationDate: new Date(today.getTime() + 25 * 24 * 60 * 60 * 1000), // 25 days from now
+        notes: 'Organic apples'
+      },
+      {
+        userId: demoUser._id,
+        itemName: 'Whole Wheat Bread',
+        category: 'grain',
+        quantity: 1,
+        purchaseDate: new Date(today.getTime() - 1 * 24 * 60 * 60 * 1000),
+        expirationDate: new Date(today.getTime() + 6 * 24 * 60 * 60 * 1000), // 6 days from now
+        notes: 'Keep sealed'
+      },
+      {
+        userId: demoUser._id,
+        itemName: 'Broccoli',
+        category: 'vegetable',
+        quantity: 2,
+        purchaseDate: today,
+        expirationDate: new Date(today.getTime() + 4 * 24 * 60 * 60 * 1000), // 4 days from now
+        notes: 'Fresh from farmers market'
+      },
+      {
+        userId: demoUser._id,
+        itemName: 'Yogurt',
+        category: 'dairy',
+        quantity: 4,
+        purchaseDate: new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000),
+        expirationDate: new Date(today.getTime() + 12 * 24 * 60 * 60 * 1000), // 12 days from now
+        notes: 'Greek yogurt'
+      },
+      {
+        userId: demoUser._id,
+        itemName: 'Orange Juice',
+        category: 'beverage',
+        quantity: 1,
+        purchaseDate: new Date(today.getTime() - 1 * 24 * 60 * 60 * 1000),
+        expirationDate: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+        notes: 'Fresh squeezed'
+      },
+      {
+        userId: demoUser._id,
+        itemName: 'Carrots',
+        category: 'vegetable',
+        quantity: 3,
+        purchaseDate: new Date(today.getTime() - 4 * 24 * 60 * 60 * 1000),
+        expirationDate: new Date(today.getTime() + 17 * 24 * 60 * 60 * 1000), // 17 days from now
+        notes: 'Baby carrots'
+      },
+      {
+        userId: demoUser._id,
+        itemName: 'Cheddar Cheese',
+        category: 'dairy',
+        quantity: 0.5,
+        purchaseDate: new Date(today.getTime() - 5 * 24 * 60 * 60 * 1000),
+        expirationDate: new Date(today.getTime() + 25 * 24 * 60 * 60 * 1000), // 25 days from now
+        notes: 'Sharp cheddar'
+      },
+      {
+        userId: demoUser._id,
+        itemName: 'Bananas',
+        category: 'fruit',
+        quantity: 5,
+        purchaseDate: today,
+        expirationDate: new Date(today.getTime() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
+        notes: 'Organic'
+      },
+      {
+        userId: demoUser._id,
+        itemName: 'Ground Beef',
+        category: 'protein',
+        quantity: 1,
+        purchaseDate: today,
+        expirationDate: new Date(today.getTime() + 1 * 24 * 60 * 60 * 1000), // 1 day from now
+        notes: 'Cook tonight or freeze'
+      },
+      {
+        userId: demoUser._id,
+        itemName: 'Lettuce',
+        category: 'vegetable',
+        quantity: 1,
+        purchaseDate: new Date(today.getTime() - 1 * 24 * 60 * 60 * 1000),
+        expirationDate: new Date(today.getTime() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
+        notes: 'Romaine lettuce'
+      },
+      {
+        userId: demoUser._id,
+        itemName: 'Eggs',
+        category: 'protein',
+        quantity: 12,
+        purchaseDate: new Date(today.getTime() - 3 * 24 * 60 * 60 * 1000),
+        expirationDate: new Date(today.getTime() + 18 * 24 * 60 * 60 * 1000), // 18 days from now
+        notes: 'Free range eggs'
+      },
+      {
+        userId: demoUser._id,
+        itemName: 'Strawberries',
+        category: 'fruit',
+        quantity: 2,
+        purchaseDate: today,
+        expirationDate: new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
+        notes: 'Very fresh, use soon'
+      },
+      {
+        userId: demoUser._id,
+        itemName: 'Rice',
+        category: 'grain',
+        quantity: 5,
+        purchaseDate: new Date(today.getTime() - 10 * 24 * 60 * 60 * 1000),
+        expirationDate: new Date(today.getTime() + 170 * 24 * 60 * 60 * 1000), // 170 days from now
+        notes: 'Brown rice'
+      }
+    ];
+
+    await InventoryItem.insertMany(sampleInventory);
+    console.log(`✅ Inserted ${sampleInventory.length} inventory items for demo user`);
+    await InventoryItem.insertMany(sampleInventory);
+    console.log(`✅ Inserted ${sampleInventory.length} inventory items for demo user`);
+
     console.log('🎉 Database seeded successfully!');
+    console.log('📧 Demo login: demo@example.com / Demo@123');
     process.exit(0);
   } catch (error) {
-    console.error('❌ Error seeding database:', error);
+    console.error('Error seeding database:', error);
     process.exit(1);
   }
 };
