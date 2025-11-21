@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { summaryAPI, uploadAPI } from '../api';
 import { useAuth } from '../context/AuthContext';
 
@@ -11,6 +11,9 @@ const Dashboard = () => {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showStats, setShowStats] = useState(false);
+  const [expandedCard, setExpandedCard] = useState(null);
+  const [currentResourceIndex, setCurrentResourceIndex] = useState(0);
+  const carouselRef = useRef(null);
 
   useEffect(() => {
     loadSummary();
@@ -70,6 +73,41 @@ const Dashboard = () => {
     return icons[category] || '🍽️';
   };
 
+  const getExpiringSoonByCategory = () => {
+    if (!summary?.inventory?.byCategory) return [];
+    const categories = Object.entries(summary.inventory.byCategory)
+      .filter(([_, data]) => data.expiringSoon > 0)
+      .map(([category, data]) => ({
+        category,
+        count: data.expiringSoon,
+        icon: getCategoryIcon(category)
+      }));
+    return categories;
+  };
+
+  const scrollCarousel = (direction) => {
+    const resources = summary?.recommendedResources?.resources || [];
+    if (direction === 'next') {
+      setCurrentResourceIndex((prev) => (prev + 1) % resources.length);
+    } else {
+      setCurrentResourceIndex((prev) => (prev - 1 + resources.length) % resources.length);
+    }
+  };
+
+  const getTimeAgo = (date) => {
+    const now = new Date();
+    const logDate = new Date(date);
+    const diff = now - logDate;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    return `${days}d ago`;
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -105,8 +143,11 @@ const Dashboard = () => {
 
       {/* Inventory Summary with Animations */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className={`card bg-gradient-to-br from-blue-500 to-blue-600 text-white transform transition-all duration-500 hover:scale-105 hover:shadow-xl cursor-pointer ${showStats ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
-             style={{ transitionDelay: '0ms' }}>
+        {/* Total Items Card */}
+        <div 
+          className={`glass-card-strong bg-gradient-to-br from-blue-500/90 to-blue-600/90 text-white transform transition-all duration-500 hover:scale-105 hover:shadow-2xl cursor-pointer border-2 border-blue-400/30 ${showStats ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+          style={{ transitionDelay: '0ms' }}
+        >
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-medium opacity-90">Total Items</h3>
@@ -119,8 +160,11 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className={`card bg-gradient-to-br from-red-500 to-red-600 text-white transform transition-all duration-500 hover:scale-105 hover:shadow-xl cursor-pointer ${showStats ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
-             style={{ transitionDelay: '100ms' }}>
+        {/* Expired Card */}
+        <div 
+          className={`glass-card-strong bg-gradient-to-br from-red-500/90 to-red-600/90 text-white transform transition-all duration-500 hover:scale-105 hover:shadow-2xl cursor-pointer border-2 border-red-400/30 ${showStats ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+          style={{ transitionDelay: '100ms' }}
+        >
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-medium opacity-90">Expired</h3>
@@ -133,90 +177,198 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className={`card bg-gradient-to-br from-yellow-500 to-yellow-600 text-white transform transition-all duration-500 hover:scale-105 hover:shadow-xl cursor-pointer ${showStats ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
-             style={{ transitionDelay: '200ms' }}>
-          <div className="flex items-center justify-between">
+        {/* Expiring Soon Card with Donut Chart */}
+        <div 
+          className={`glass-card-strong bg-gradient-to-br from-yellow-400/90 to-red-500/90 text-white transform transition-all duration-700 cursor-pointer border-2 border-yellow-300/30 ${showStats ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'} ${expandedCard === 'expiring' ? 'md:col-span-2 scale-105' : ''}`}
+          style={{ transitionDelay: '200ms' }}
+          onMouseEnter={() => setExpandedCard('expiring')}
+          onMouseLeave={() => setExpandedCard(null)}
+        >
+          <div className="flex items-center justify-between mb-3">
             <div>
               <h3 className="text-sm font-medium opacity-90">Expiring Soon</h3>
               <p className="text-4xl font-bold mt-2">{summary?.inventory?.expiringSoon || 0}</p>
             </div>
-            <div className="text-5xl opacity-80">⏰</div>
+            {expandedCard !== 'expiring' && (
+              <div className="text-5xl opacity-80">⏰</div>
+            )}
           </div>
-          <div className="mt-4 pt-4 border-t border-yellow-400 border-opacity-30">
-            <p className="text-xs opacity-75">Use within 3 days</p>
-          </div>
-        </div>
 
-        <div className={`card bg-gradient-to-br from-primary-500 to-primary-600 text-white transform transition-all duration-500 hover:scale-105 hover:shadow-xl cursor-pointer ${showStats ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
-             style={{ transitionDelay: '300ms' }}>
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-medium opacity-90">Categories</h3>
-              <p className="text-4xl font-bold mt-2">
-                {Object.keys(summary?.inventory?.byCategory || {}).length}
-              </p>
-            </div>
-            <div className="text-5xl opacity-80">🗂️</div>
-          </div>
-          <div className="mt-4 pt-4 border-t border-primary-400 border-opacity-30">
-            <p className="text-xs opacity-75">Food types</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Consumption Logs */}
-      <div className="card hover:shadow-xl transition-shadow duration-300">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">Recent Food Logs</h2>
-            <p className="text-sm text-gray-600">Your consumption history</p>
-          </div>
-          <div className="flex gap-2">
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="all">All Categories</option>
-              <option value="fruit">🍎 Fruit</option>
-              <option value="vegetable">🥕 Vegetable</option>
-              <option value="dairy">🥛 Dairy</option>
-              <option value="grain">🌾 Grain</option>
-              <option value="protein">🍖 Protein</option>
-              <option value="beverage">🥤 Beverage</option>
-              <option value="snack">🍪 Snack</option>
-            </select>
-          </div>
-        </div>
-        {getFilteredLogs().length > 0 ? (
-          <div className="space-y-2">
-            {getFilteredLogs().slice(0, 5).map((log, index) => (
-              <div
-                key={log._id}
-                className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white rounded-lg border border-gray-100 hover:border-primary-300 hover:shadow-md transition-all duration-200 cursor-pointer transform hover:scale-[1.02]"
-                style={{
-                  animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both`
-                }}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="text-3xl">{getCategoryIcon(log.category)}</div>
-                  <div>
-                    <p className="font-medium text-gray-900">{log.itemName}</p>
-                    <p className="text-sm text-gray-600">
-                      {log.category} • {log.quantity} units
-                    </p>
+          {/* Animated Donut Chart */}
+          {expandedCard === 'expiring' && getExpiringSoonByCategory().length > 0 && (
+            <div className="mt-4 animate-pulse-subtle">
+              <div className="flex items-center gap-4">
+                {/* SVG Donut Chart */}
+                <div className="relative w-32 h-32">
+                  <svg viewBox="0 0 100 100" className="transform -rotate-90">
+                    {(() => {
+                      const total = getExpiringSoonByCategory().reduce((sum, cat) => sum + cat.count, 0);
+                      let currentAngle = 0;
+                      const colors = ['#ef4444', '#f59e0b', '#eab308', '#fb923c', '#f97316'];
+                      
+                      return getExpiringSoonByCategory().map((cat, index) => {
+                        const percentage = (cat.count / total) * 100;
+                        const angle = (percentage / 100) * 360;
+                        const radius = 40;
+                        const circumference = 2 * Math.PI * radius;
+                        const strokeDasharray = `${(angle / 360) * circumference} ${circumference}`;
+                        const rotation = currentAngle;
+                        currentAngle += angle;
+                        
+                        return (
+                          <circle
+                            key={cat.category}
+                            cx="50"
+                            cy="50"
+                            r={radius}
+                            fill="none"
+                            stroke={colors[index % colors.length]}
+                            strokeWidth="20"
+                            strokeDasharray={strokeDasharray}
+                            style={{
+                              transform: `rotate(${rotation}deg)`,
+                              transformOrigin: '50% 50%',
+                              transition: 'all 0.8s ease-in-out'
+                            }}
+                          />
+                        );
+                      });
+                    })()}
+                    <circle cx="50" cy="50" r="25" fill="#fbbf24" />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-2xl">⏰</span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium text-gray-700">
-                    {new Date(log.date).toLocaleDateString()}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {new Date(log.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </p>
+
+                {/* Category Breakdown */}
+                <div className="flex-1 space-y-1">
+                  {getExpiringSoonByCategory().map((cat, index) => {
+                    const colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-orange-400', 'bg-red-400'];
+                    return (
+                      <div key={cat.category} className="flex items-center gap-2 text-xs">
+                        <div className={`w-3 h-3 rounded-full ${colors[index % colors.length]}`}></div>
+                        <span className="opacity-90">{cat.icon} {cat.category}</span>
+                        <span className="ml-auto font-bold">{cat.count}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-            ))}
+            </div>
+          )}
+
+          {expandedCard !== 'expiring' && (
+            <div className="mt-4 pt-4 border-t border-yellow-400 border-opacity-30">
+              <p className="text-xs opacity-75">Use within 3 days</p>
+            </div>
+          )}
+        </div>
+
+        {/* Categories Card - Conditional rendering based on expansion */}
+        {expandedCard !== 'expiring' && (
+          <div 
+            className={`glass-card-strong bg-gradient-to-br from-primary-500/90 to-primary-600/90 text-white transform transition-all duration-500 hover:scale-105 hover:shadow-2xl cursor-pointer border-2 border-primary-400/30 ${showStats ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+            style={{ transitionDelay: '300ms' }}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium opacity-90">Categories</h3>
+                <p className="text-4xl font-bold mt-2">
+                  {Object.keys(summary?.inventory?.byCategory || {}).length}
+                </p>
+              </div>
+              <div className="text-5xl opacity-80">🗂️</div>
+            </div>
+            <div className="mt-4 pt-4 border-t border-primary-400 border-opacity-30">
+              <p className="text-xs opacity-75">Food types</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Recent Consumption Logs - Vertical Timeline */}
+      <div className="glass-card-strong bg-gradient-to-br from-white/70 to-gray-100/50 hover:shadow-2xl transition-shadow duration-300 border-2 border-gray-300/40">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Recent Food Logs</h2>
+            <p className="text-sm text-gray-600">Your consumption history timeline</p>
+          </div>
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          >
+            <option value="all">All Categories</option>
+            <option value="fruit">🍎 Fruit</option>
+            <option value="vegetable">🥕 Vegetable</option>
+            <option value="dairy">🥛 Dairy</option>
+            <option value="grain">🌾 Grain</option>
+            <option value="protein">🍖 Protein</option>
+            <option value="beverage">🥤 Beverage</option>
+            <option value="snack">🍪 Snack</option>
+          </select>
+        </div>
+        {getFilteredLogs().length > 0 ? (
+          <div className="relative">
+            {/* Timeline Line */}
+            <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary-400 via-primary-300 to-transparent"></div>
+            
+            {/* Timeline Items */}
+            <div className="space-y-6 max-h-96 overflow-y-auto pr-2 smooth-scroll">
+              {getFilteredLogs().map((log, index) => (
+                <div
+                  key={log._id}
+                  className="relative pl-20 group"
+                  style={{
+                    animation: `fadeInLeft 0.6s ease-out ${index * 0.15}s both`
+                  }}
+                >
+                  {/* Timeline Marker */}
+                  <div className="absolute left-0 flex items-center gap-3">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-2xl shadow-lg transform group-hover:scale-110 transition-transform duration-300 border-4 border-white">
+                      {getCategoryIcon(log.category)}
+                    </div>
+                  </div>
+
+                  {/* Date Badge */}
+                  <div className="absolute -left-1 top-16 bg-primary-100 text-primary-700 px-2 py-1 rounded text-xs font-semibold shadow-sm">
+                    {getTimeAgo(log.date)}
+                  </div>
+
+                  {/* Content Card */}
+                  <div className="bg-gradient-to-r from-white to-gray-50 rounded-xl p-4 border-2 border-gray-200 group-hover:border-primary-400 group-hover:shadow-lg transition-all duration-300 transform group-hover:-translate-y-1">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <h3 className="font-bold text-lg text-gray-900">{log.itemName}</h3>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="px-2 py-1 bg-primary-100 text-primary-700 text-xs font-medium rounded-full">
+                            {log.category}
+                          </span>
+                          <span className="text-sm font-semibold text-gray-700">
+                            📊 {log.quantity} units
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-gray-700">
+                          {new Date(log.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(log.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                    </div>
+                    {log.notes && (
+                      <p className="text-sm text-gray-600 mt-2 italic">💬 {log.notes}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Fade Out Effect at Bottom */}
+            <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
           </div>
         ) : (
           <div className="text-center py-12">
@@ -227,41 +379,133 @@ const Dashboard = () => {
         )}
       </div>
 
-      {/* Recommended Resources */}
-      <div className="card hover:shadow-xl transition-shadow duration-300">
-        <h2 className="text-xl font-bold text-gray-900 mb-2">Recommended for You</h2>
-        <p className="text-sm text-gray-600 mb-4">
-          {summary?.recommendedResources?.explanation}
-        </p>
+      {/* Recommended Resources - Swipeable Carousel */}
+      <div className="glass-card-strong bg-gradient-to-br from-white/70 to-primary-100/50 hover:shadow-2xl transition-shadow duration-300 overflow-hidden border-2 border-primary-300/40">
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Recommended for You</h2>
+          <p className="text-sm text-gray-600">
+            {summary?.recommendedResources?.explanation || 'Personalized sustainability resources'}
+          </p>
+        </div>
+        
         {summary?.recommendedResources?.resources?.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {summary.recommendedResources.resources.map((resource, index) => (
-              <div
-                key={resource._id}
-                className="p-4 bg-gradient-to-br from-primary-50 to-white rounded-lg border-2 border-primary-100 hover:border-primary-300 hover:shadow-lg transition-all duration-300 cursor-pointer transform hover:scale-105"
+          <div className="relative">
+            {/* Carousel Container */}
+            <div className="overflow-hidden" ref={carouselRef}>
+              <div 
+                className="flex transition-transform duration-700 ease-in-out"
                 style={{
-                  animation: `fadeInUp 0.5s ease-out ${index * 0.15}s both`
+                  transform: `translateX(-${currentResourceIndex * 100}%)`
                 }}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-2xl">📚</span>
-                      <h3 className="font-semibold text-gray-900">{resource.title}</h3>
+                {summary.recommendedResources.resources.map((resource, index) => {
+                  const isCurrent = index === currentResourceIndex;
+                  const isPrev = index === currentResourceIndex - 1;
+                  const isNext = index === currentResourceIndex + 1;
+                  
+                  return (
+                    <div
+                      key={resource._id}
+                      className="w-full flex-shrink-0 px-4 transition-all duration-700"
+                    >
+                      <div
+                        className={`p-8 bg-gradient-to-br from-primary-50 via-white to-purple-50 rounded-2xl border-2 transition-all duration-700 ${
+                          isCurrent 
+                            ? 'border-primary-400 shadow-2xl scale-100 opacity-100' 
+                            : 'border-primary-100 shadow-md scale-95 opacity-60'
+                        }`}
+                        style={{
+                          transform: isCurrent ? 'scale(1)' : 'scale(0.9)',
+                        }}
+                      >
+                        <div className="text-center">
+                          {/* Icon */}
+                          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-primary-500 to-purple-500 rounded-full mb-6 shadow-lg">
+                            <span className="text-4xl">
+                              {resource.type === 'video' ? '🎥' : 
+                               resource.type === 'article' ? '📄' :
+                               resource.type === 'guide' ? '📘' :
+                               resource.type === 'recipe' ? '🍳' : '📚'}
+                            </span>
+                          </div>
+
+                          {/* Content */}
+                          <h3 className="text-2xl font-bold text-gray-900 mb-4">{resource.title}</h3>
+                          <p className="text-gray-600 mb-6 leading-relaxed">{resource.description}</p>
+
+                          {/* Tags */}
+                          <div className="flex items-center justify-center gap-2 mb-6">
+                            <span className="px-4 py-2 bg-primary-200 text-primary-800 text-sm font-medium rounded-full">
+                              {resource.type}
+                            </span>
+                            <span className="px-4 py-2 bg-purple-200 text-purple-800 text-sm font-medium rounded-full">
+                              {resource.relatedCategory}
+                            </span>
+                          </div>
+
+                          {/* Learn More Button */}
+                          {resource.url && (
+                            <a
+                              href={resource.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-purple-500 text-white font-semibold rounded-lg hover:from-primary-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                            >
+                              Learn More
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                              </svg>
+                            </a>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-600 mt-1 mb-3">{resource.description}</p>
-                    <div className="flex items-center gap-2">
-                      <span className="px-3 py-1 bg-primary-200 text-primary-800 text-xs font-medium rounded-full">
-                        {resource.type}
-                      </span>
-                      <span className="px-3 py-1 bg-gray-200 text-gray-700 text-xs font-medium rounded-full">
-                        {resource.relatedCategory}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                  );
+                })}
               </div>
-            ))}
+            </div>
+
+            {/* Navigation Arrows */}
+            {summary.recommendedResources.resources.length > 1 && (
+              <>
+                <button
+                  onClick={() => scrollCarousel('prev')}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 w-12 h-12 bg-white hover:bg-primary-500 text-gray-700 hover:text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 transform hover:scale-110 z-10 border-2 border-primary-200"
+                  aria-label="Previous resource"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => scrollCarousel('next')}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 w-12 h-12 bg-white hover:bg-primary-500 text-gray-700 hover:text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 transform hover:scale-110 z-10 border-2 border-primary-200"
+                  aria-label="Next resource"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </>
+            )}
+
+            {/* Pagination Dots */}
+            {summary.recommendedResources.resources.length > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-8">
+                {summary.recommendedResources.resources.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentResourceIndex(index)}
+                    className={`transition-all duration-300 rounded-full ${
+                      index === currentResourceIndex
+                        ? 'w-8 h-3 bg-primary-500'
+                        : 'w-3 h-3 bg-gray-300 hover:bg-gray-400'
+                    }`}
+                    aria-label={`Go to resource ${index + 1}`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-center py-12">
@@ -273,7 +517,7 @@ const Dashboard = () => {
       </div>
 
       {/* Upload Section */}
-      <div className="card bg-gradient-to-br from-primary-50 to-white border-2 border-primary-100">
+      <div className="glass-card bg-gradient-to-br from-primary-100/40 to-white/60 border-2 border-primary-200/50">
         <div className="flex items-start gap-4 mb-6">
           <div className="p-3 bg-primary-600 rounded-lg">
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

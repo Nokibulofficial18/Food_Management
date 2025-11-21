@@ -21,7 +21,7 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="bg-white shadow-md sticky top-0 z-50">
+      <nav className="backdrop-blur-xl bg-white/80 shadow-xl sticky top-0 z-50 border-b border-white/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo and Mobile Menu Button */}
@@ -84,13 +84,13 @@ const Navbar = () => {
       >
         {/* Backdrop */}
         <div
-          className="absolute inset-0 bg-black bg-opacity-50"
+          className="absolute inset-0 bg-black/40 backdrop-blur-sm"
           onClick={closeMobileMenu}
         ></div>
 
         {/* Sidebar */}
         <div
-          className={`absolute left-0 top-0 h-full w-64 bg-white shadow-xl transform transition-transform duration-300 ${
+          className={`absolute left-0 top-0 h-full w-64 backdrop-blur-xl bg-white/90 shadow-2xl border-r border-white/50 transform transition-transform duration-300 ${
             isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
