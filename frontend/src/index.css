@@ -4,7 +4,8 @@
 
 @layer base {
   body {
-    @apply bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 text-gray-900 min-h-screen;
+    background: linear-gradient(to bottom, #f0f9ff, #f0fdfa);
+    @apply text-gray-900 min-h-screen;
     background-attachment: fixed;
   }
 }

@@ -145,7 +145,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Total Items Card */}
         <div 
-          className={`glass-card-strong bg-gradient-to-br from-blue-500/90 to-blue-600/90 text-white transform transition-all duration-500 hover:scale-105 hover:shadow-2xl cursor-pointer border-2 border-blue-400/30 ${showStats ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+          className={`glass-card-strong bg-gradient-to-br from-blue-400 to-blue-500 text-white transform transition-all duration-500 hover:scale-105 hover:shadow-2xl cursor-pointer border-2 border-blue-300/40 ${showStats ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
           style={{ transitionDelay: '0ms' }}
         >
           <div className="flex items-center justify-between">
@@ -162,7 +162,7 @@ const Dashboard = () => {
 
         {/* Expired Card */}
         <div 
-          className={`glass-card-strong bg-gradient-to-br from-red-500/90 to-red-600/90 text-white transform transition-all duration-500 hover:scale-105 hover:shadow-2xl cursor-pointer border-2 border-red-400/30 ${showStats ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+          className={`glass-card-strong bg-gradient-to-br from-red-400 to-red-500 text-white transform transition-all duration-500 hover:scale-105 hover:shadow-2xl cursor-pointer border-2 border-red-300/40 ${showStats ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
           style={{ transitionDelay: '100ms' }}
         >
           <div className="flex items-center justify-between">
@@ -179,7 +179,7 @@ const Dashboard = () => {
 
         {/* Expiring Soon Card with Donut Chart */}
         <div 
-          className={`glass-card-strong bg-gradient-to-br from-yellow-400/90 to-red-500/90 text-white transform transition-all duration-700 cursor-pointer border-2 border-yellow-300/30 ${showStats ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'} ${expandedCard === 'expiring' ? 'md:col-span-2 scale-105' : ''}`}
+          className={`glass-card-strong bg-gradient-to-br from-yellow-300 to-orange-400 text-white transform transition-all duration-700 cursor-pointer border-2 border-yellow-200/40 ${showStats ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'} ${expandedCard === 'expiring' ? 'md:col-span-2 scale-105' : ''}`}
           style={{ transitionDelay: '200ms' }}
           onMouseEnter={() => setExpandedCard('expiring')}
           onMouseLeave={() => setExpandedCard(null)}
@@ -268,7 +268,7 @@ const Dashboard = () => {
         {/* Categories Card - Conditional rendering based on expansion */}
         {expandedCard !== 'expiring' && (
           <div 
-            className={`glass-card-strong bg-gradient-to-br from-primary-500/90 to-primary-600/90 text-white transform transition-all duration-500 hover:scale-105 hover:shadow-2xl cursor-pointer border-2 border-primary-400/30 ${showStats ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+            className={`glass-card-strong bg-gradient-to-br from-emerald-400 to-emerald-500 text-white transform transition-all duration-500 hover:scale-105 hover:shadow-2xl cursor-pointer border-2 border-emerald-300/40 ${showStats ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
             style={{ transitionDelay: '300ms' }}
           >
             <div className="flex items-center justify-between">
@@ -288,16 +288,16 @@ const Dashboard = () => {
       </div>
 
       {/* Recent Consumption Logs - Vertical Timeline */}
-      <div className="glass-card-strong bg-gradient-to-br from-white/70 to-gray-100/50 hover:shadow-2xl transition-shadow duration-300 border-2 border-gray-300/40">
+      <div className="glass-card-strong bg-gradient-to-br from-purple-400/95 to-purple-500/95 text-white hover:shadow-2xl transition-shadow duration-300 border-2 border-purple-300/40">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Recent Food Logs</h2>
-            <p className="text-sm text-gray-600">Your consumption history timeline</p>
+            <h2 className="text-xl font-bold text-white">Recent Food Logs</h2>
+            <p className="text-sm text-purple-50">Your consumption history timeline</p>
           </div>
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            className="px-4 py-2 bg-white/90 border border-purple-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-white focus:border-white backdrop-blur-sm"
           >
             <option value="all">All Categories</option>
             <option value="fruit">🍎 Fruit</option>
@@ -312,7 +312,7 @@ const Dashboard = () => {
         {getFilteredLogs().length > 0 ? (
           <div className="relative">
             {/* Timeline Line */}
-            <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary-400 via-primary-300 to-transparent"></div>
+            <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-white via-purple-200 to-transparent"></div>
             
             {/* Timeline Items */}
             <div className="space-y-6 max-h-96 overflow-y-auto pr-2 smooth-scroll">
@@ -326,18 +326,18 @@ const Dashboard = () => {
                 >
                   {/* Timeline Marker */}
                   <div className="absolute left-0 flex items-center gap-3">
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-2xl shadow-lg transform group-hover:scale-110 transition-transform duration-300 border-4 border-white">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-white to-purple-100 flex items-center justify-center text-2xl shadow-lg transform group-hover:scale-110 transition-transform duration-300 border-4 border-purple-200">
                       {getCategoryIcon(log.category)}
                     </div>
                   </div>
 
                   {/* Date Badge */}
-                  <div className="absolute -left-1 top-16 bg-primary-100 text-primary-700 px-2 py-1 rounded text-xs font-semibold shadow-sm">
+                  <div className="absolute -left-1 top-16 bg-white/90 text-purple-700 px-2 py-1 rounded text-xs font-semibold shadow-sm backdrop-blur-sm">
                     {getTimeAgo(log.date)}
                   </div>
 
                   {/* Content Card */}
-                  <div className="bg-gradient-to-r from-white to-gray-50 rounded-xl p-4 border-2 border-gray-200 group-hover:border-primary-400 group-hover:shadow-lg transition-all duration-300 transform group-hover:-translate-y-1">
+                  <div className="bg-white/90 backdrop-blur-sm rounded-xl p-4 border-2 border-purple-200/50 group-hover:border-white group-hover:shadow-xl transition-all duration-300 transform group-hover:-translate-y-1">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
                         <h3 className="font-bold text-lg text-gray-900">{log.itemName}</h3>
@@ -371,19 +371,19 @@ const Dashboard = () => {
             <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
           </div>
         ) : (
-          <div className="text-center py-12">
+          <div className="text-center py-16 bg-white/20 backdrop-blur-sm rounded-lg">
             <div className="text-6xl mb-4">📝</div>
-            <p className="text-gray-500 font-medium">No consumption logs yet</p>
-            <p className="text-sm text-gray-400 mt-1">Start tracking your food consumption</p>
+            <p className="text-white font-medium">No consumption logs yet</p>
+            <p className="text-sm text-purple-100 mt-1">Start tracking your food consumption</p>
           </div>
         )}
       </div>
 
       {/* Recommended Resources - Swipeable Carousel */}
-      <div className="glass-card-strong bg-gradient-to-br from-white/70 to-primary-100/50 hover:shadow-2xl transition-shadow duration-300 overflow-hidden border-2 border-primary-300/40">
+      <div className="glass-card-strong bg-gradient-to-br from-teal-400/95 to-cyan-500/95 text-white hover:shadow-2xl transition-shadow duration-300 overflow-hidden border-2 border-teal-300/40">
         <div className="mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Recommended for You</h2>
-          <p className="text-sm text-gray-600">
+          <h2 className="text-xl font-bold text-white mb-2">Recommended for You</h2>
+          <p className="text-sm text-teal-50">
             {summary?.recommendedResources?.explanation || 'Personalized sustainability resources'}
           </p>
         </div>
@@ -409,10 +409,10 @@ const Dashboard = () => {
                       className="w-full flex-shrink-0 px-4 transition-all duration-700"
                     >
                       <div
-                        className={`p-8 bg-gradient-to-br from-primary-50 via-white to-purple-50 rounded-2xl border-2 transition-all duration-700 ${
+                        className={`p-8 bg-white/90 backdrop-blur-sm rounded-2xl border-2 transition-all duration-700 ${
                           isCurrent 
-                            ? 'border-primary-400 shadow-2xl scale-100 opacity-100' 
-                            : 'border-primary-100 shadow-md scale-95 opacity-60'
+                            ? 'border-white shadow-2xl scale-100 opacity-100' 
+                            : 'border-teal-200/50 shadow-md scale-95 opacity-60'
                         }`}
                         style={{
                           transform: isCurrent ? 'scale(1)' : 'scale(0.9)',
@@ -420,7 +420,7 @@ const Dashboard = () => {
                       >
                         <div className="text-center">
                           {/* Icon */}
-                          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-primary-500 to-purple-500 rounded-full mb-6 shadow-lg">
+                          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-full mb-6 shadow-lg">
                             <span className="text-4xl">
                               {resource.type === 'video' ? '🎥' : 
                                resource.type === 'article' ? '📄' :
@@ -435,21 +435,21 @@ const Dashboard = () => {
 
                           {/* Tags */}
                           <div className="flex items-center justify-center gap-2 mb-6">
-                            <span className="px-4 py-2 bg-primary-200 text-primary-800 text-sm font-medium rounded-full">
+                            <span className="px-4 py-2 bg-teal-100 text-teal-800 text-sm font-medium rounded-full">
                               {resource.type}
                             </span>
-                            <span className="px-4 py-2 bg-purple-200 text-purple-800 text-sm font-medium rounded-full">
+                            <span className="px-4 py-2 bg-cyan-100 text-cyan-800 text-sm font-medium rounded-full capitalize">
                               {resource.relatedCategory}
                             </span>
                           </div>
 
-                          {/* Learn More Button */}
+                          {/* Action Button */}
                           {resource.url && (
                             <a
                               href={resource.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-purple-500 text-white font-semibold rounded-lg hover:from-primary-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-semibold rounded-lg hover:from-teal-600 hover:to-cyan-600 transition-all transform hover:scale-105 shadow-lg hover:shadow-xl"
                             >
                               Learn More
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -470,7 +470,7 @@ const Dashboard = () => {
               <>
                 <button
                   onClick={() => scrollCarousel('prev')}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 w-12 h-12 bg-white hover:bg-primary-500 text-gray-700 hover:text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 transform hover:scale-110 z-10 border-2 border-primary-200"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 w-12 h-12 bg-white hover:bg-white/90 text-teal-600 hover:text-teal-700 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 transform hover:scale-110 z-10 border-2 border-white/50 backdrop-blur-sm"
                   aria-label="Previous resource"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -479,7 +479,7 @@ const Dashboard = () => {
                 </button>
                 <button
                   onClick={() => scrollCarousel('next')}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 w-12 h-12 bg-white hover:bg-primary-500 text-gray-700 hover:text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 transform hover:scale-110 z-10 border-2 border-primary-200"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 w-12 h-12 bg-white hover:bg-white/90 text-teal-600 hover:text-teal-700 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 transform hover:scale-110 z-10 border-2 border-white/50 backdrop-blur-sm"
                   aria-label="Next resource"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -498,8 +498,8 @@ const Dashboard = () => {
                     onClick={() => setCurrentResourceIndex(index)}
                     className={`transition-all duration-300 rounded-full ${
                       index === currentResourceIndex
-                        ? 'w-8 h-3 bg-primary-500'
-                        : 'w-3 h-3 bg-gray-300 hover:bg-gray-400'
+                        ? 'w-8 h-3 bg-white shadow-md'
+                        : 'w-3 h-3 bg-white/40 hover:bg-white/60 backdrop-blur-sm'
                     }`}
                     aria-label={`Go to resource ${index + 1}`}
                   />
