@@ -16,6 +16,7 @@ import uploadRoutes from './routes/uploadRoutes.js';
 import summaryRoutes from './routes/summaryRoutes.js';
 import analysisRoutes from './routes/analysisRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
+import ocrRoutes from './routes/ocrRoutes.js';
 
 // Initialize dotenv
 dotenv.config();
@@ -55,6 +56,7 @@ app.use('/api/uploads', uploadRoutes);
 app.use('/api/summary', summaryRoutes);
 app.use('/api/analysis', analysisRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/ocr', ocrRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

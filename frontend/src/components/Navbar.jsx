@@ -11,6 +11,7 @@ const Navbar = () => {
     { path: '/dashboard', label: 'Dashboard', icon: '📊' },
     { path: '/logs', label: 'Logs', icon: '📝' },
     { path: '/inventory', label: 'Inventory', icon: '📦' },
+    { path: '/ocr-scanner', label: 'OCR Scanner', icon: '📸' },
     { path: '/meal-planner', label: 'Meal Planner', icon: '🍽️' },
     { path: '/analysis', label: 'AI Analysis', icon: '🤖' },
     { path: '/resources', label: 'Resources', icon: '📚' },

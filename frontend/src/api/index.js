@@ -70,4 +70,16 @@ export const aiAPI = {
   getMealSuggestions: (data) => api.post('/ai/meal-suggestions', data)
 };
 
+// OCR API
+export const ocrAPI = {
+  processImage: (imageFile) => {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    return api.post('/ocr/process-image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+  confirmItems: (items) => api.post('/ocr/confirm-items', { items }),
+  getInfo: () => api.get('/ocr/info')
+};
 

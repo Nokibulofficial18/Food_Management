@@ -11,6 +11,7 @@ import Inventory from './pages/Inventory';
 import Resources from './pages/Resources';
 import Analysis from './pages/Analysis';
 import MealPlanner from './pages/MealPlanner';
+import OCRScanner from './pages/OCRScanner';
 
 function App() {
   return (
@@ -92,6 +93,17 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <MealPlanner />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/ocr-scanner"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <OCRScanner />
                 </Layout>
               </ProtectedRoute>
             }
