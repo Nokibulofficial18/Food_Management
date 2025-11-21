@@ -56,3 +56,18 @@ export const uploadAPI = {
 export const summaryAPI = {
   getSummary: () => api.get('/summary')
 };
+
+// Analysis API
+export const analysisAPI = {
+  getWeeklyAnalysis: () => api.get('/analysis/weekly'),
+  getConsumptionTrends: (days = 30) => api.get('/analysis/trends', { params: { days } }),
+  getCategoryStats: () => api.get('/analysis/category-stats')
+};
+
+// AI Meal Optimization API
+export const aiAPI = {
+  optimizeMealPlan: (data) => api.post('/ai/meal-optimize', data),
+  getMealSuggestions: (data) => api.post('/ai/meal-suggestions', data)
+};
+
+

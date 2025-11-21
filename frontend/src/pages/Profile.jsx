@@ -13,11 +13,19 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
-  const [focusedField, setFocusedField] = useState('');
+  const [focusedField, setFocusedField] = useState('fullName');
   const [newPreference, setNewPreference] = useState('');
   const [removingPref, setRemovingPref] = useState(null);
   const [budgetUsed, setBudgetUsed] = useState(0);
+  const [showDietarySuggestions, setShowDietarySuggestions] = useState(false);
+  const [showLocationMap, setShowLocationMap] = useState(false);
+  const [selectedPlace, setSelectedPlace] = useState(null);
+  const [locationSuggestions, setLocationSuggestions] = useState([]);
   const nameInputRef = useRef(null);
+  const locationInputRef = useRef(null);
+  const locationDebounceRef = useRef(null);
+
+  const dietarySuggestions = ['Vegan', 'Keto', 'Paleo', 'Pescatarian', 'Dairy-Free', 'Nut-Free', 'Low-Carb', 'Mediterranean'];
 
   useEffect(() => {
     loadProfile();
@@ -32,7 +40,12 @@ const Profile = () => {
   const loadProfile = async () => {
     try {
       const response = await userAPI.getProfile();
-      setProfile(response.data.user);
+      const userData = response.data.user;
+      // Set default dietary preferences if empty
+      if (!userData.dietaryPreferences || userData.dietaryPreferences.length === 0) {
+        userData.dietaryPreferences = ['Vegetarian', 'Gluten-Free'];
+      }
+      setProfile(userData);
     } catch (error) {
       console.error('Failed to load profile:', error);
     } finally {
@@ -40,21 +53,83 @@ const Profile = () => {
     }
   };
 
+  const searchLocation = async (query) => {
+    if (!query || query.length < 3) {
+      setLocationSuggestions([]);
+      return;
+    }
+
+    try {
+      // Using OpenStreetMap Nominatim - completely free, no API key needed
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&addressdetails=1`,
+        {
+          headers: {
+            'User-Agent': 'FoodSaver App' // Required by Nominatim
+          }
+        }
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        setLocationSuggestions(data);
+      }
+    } catch (error) {
+      console.error('Location search failed:', error);
+      setLocationSuggestions([]);
+    }
+  };
+
+  const selectLocation = (suggestion) => {
+    setSelectedPlace({
+      name: suggestion.display_name,
+      lat: parseFloat(suggestion.lat),
+      lng: parseFloat(suggestion.lon)
+    });
+    setProfile({ ...profile, location: suggestion.display_name });
+    setLocationSuggestions([]);
+    setShowLocationMap(true);
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setProfile({ ...profile, [name]: value });
   };
 
+  const incrementHouseholdSize = () => {
+    setProfile({ ...profile, householdSize: Math.min(profile.householdSize + 1, 20) });
+  };
+
+  const decrementHouseholdSize = () => {
+    setProfile({ ...profile, householdSize: Math.max(profile.householdSize - 1, 1) });
+  };
+
+  const addDietaryPreference = (pref) => {
+    if (!profile.dietaryPreferences.includes(pref)) {
+      setProfile({ 
+        ...profile, 
+        dietaryPreferences: [...profile.dietaryPreferences, pref] 
+      });
+    }
+    setNewPreference('');
+    setShowDietarySuggestions(false);
+  };
+
   const handleDietaryPreferences = (e) => {
-    if (e.key === 'Enter' && newPreference.trim()) {
+    const value = e.target.value;
+    setNewPreference(value);
+    setShowDietarySuggestions(value.length > 0);
+    
+    if (e.key === 'Enter' && value.trim()) {
       e.preventDefault();
-      if (!profile.dietaryPreferences.includes(newPreference.trim())) {
+      if (!profile.dietaryPreferences.includes(value.trim())) {
         setProfile({ 
           ...profile, 
-          dietaryPreferences: [...profile.dietaryPreferences, newPreference.trim()] 
+          dietaryPreferences: [...profile.dietaryPreferences, value.trim()] 
         });
       }
       setNewPreference('');
+      setShowDietarySuggestions(false);
     }
   };
 
@@ -174,10 +249,15 @@ const Profile = () => {
               type="email"
               value={profile.email}
               disabled
-              className="input-field bg-gray-100 cursor-not-allowed"
+              className="input-field bg-gray-100 cursor-not-allowed pr-32"
             />
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-              <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full">Verified</span>
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+              <span className="flex items-center gap-1 text-xs bg-green-100 text-green-700 px-3 py-1.5 rounded-full font-semibold border border-green-300">
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                Verified
+              </span>
             </div>
           </div>
         </div>
@@ -187,20 +267,30 @@ const Profile = () => {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Household Size
           </label>
-          <input
-            type="number"
-            name="householdSize"
-            value={profile.householdSize}
-            onChange={handleChange}
-            onFocus={() => setFocusedField('householdSize')}
-            onBlur={() => setFocusedField('')}
-            min={1}
-            max={20}
-            className={`input-field transition-all duration-300 ${
-              focusedField === 'householdSize' ? 'input-glow-blue' : ''
-            }`}
-          />
-          <p className="text-xs text-gray-500 mt-2">👥 Number of people in your household</p>
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={decrementHouseholdSize}
+              className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg font-bold text-xl hover:from-blue-600 hover:to-blue-700 active:scale-95 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={profile.householdSize <= 1}
+            >
+              −
+            </button>
+            <div className="flex-1 text-center">
+              <div className="text-4xl font-bold text-gray-900 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg py-4 border-2 border-blue-200">
+                {profile.householdSize}
+              </div>
+              <p className="text-xs text-gray-500 mt-2">👥 Number of people</p>
+            </div>
+            <button
+              type="button"
+              onClick={incrementHouseholdSize}
+              className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg font-bold text-xl hover:from-blue-600 hover:to-blue-700 active:scale-95 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={profile.householdSize >= 20}
+            >
+              +
+            </button>
+          </div>
         </div>
 
         {/* Dietary Preferences with Animated Pills */}
@@ -208,19 +298,62 @@ const Profile = () => {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Dietary Preferences
           </label>
-          <div className="mb-3">
+          <div className="mb-3 relative">
             <input
               type="text"
               value={newPreference}
-              onChange={(e) => setNewPreference(e.target.value)}
+              onChange={(e) => {
+                setNewPreference(e.target.value);
+                setShowDietarySuggestions(e.target.value.length > 0);
+              }}
               onKeyDown={handleDietaryPreferences}
-              onFocus={() => setFocusedField('dietaryPreferences')}
-              onBlur={() => setFocusedField('')}
+              onFocus={() => {
+                setFocusedField('dietaryPreferences');
+                if (newPreference) setShowDietarySuggestions(true);
+              }}
+              onBlur={() => {
+                setFocusedField('');
+                setTimeout(() => setShowDietarySuggestions(false), 200);
+              }}
               className={`input-field transition-all duration-300 ${
                 focusedField === 'dietaryPreferences' ? 'input-glow-blue' : ''
               }`}
-              placeholder="Type and press Enter to add (e.g., vegetarian, gluten-free)"
+              placeholder="Type to see suggestions (e.g., Vegetarian, Gluten-Free)"
             />
+            
+            {/* Suggestions Dropdown */}
+            {showDietarySuggestions && (
+              <div className="absolute z-20 w-full mt-2 glass-card-strong bg-white/95 border-2 border-blue-200 rounded-lg shadow-xl max-h-48 overflow-y-auto animate-fade-in-up">
+                <div className="p-2">
+                  <p className="text-xs font-bold text-gray-500 px-3 py-2">Suggestions:</p>
+                  {dietarySuggestions
+                    .filter(sug => 
+                      sug.toLowerCase().includes(newPreference.toLowerCase()) &&
+                      !profile.dietaryPreferences.includes(sug)
+                    )
+                    .map((suggestion, index) => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        onClick={() => addDietaryPreference(suggestion)}
+                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium text-gray-700 hover:text-blue-700"
+                        style={{ animationDelay: `${index * 0.05}s` }}
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  {newPreference && !dietarySuggestions.some(s => s.toLowerCase() === newPreference.toLowerCase()) && (
+                    <button
+                      type="button"
+                      onClick={() => addDietaryPreference(newPreference)}
+                      className="w-full text-left px-3 py-2 rounded-lg bg-green-50 hover:bg-green-100 transition-colors text-sm font-semibold text-green-700 border border-green-200"
+                    >
+                      ✓ Add "{newPreference}"
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
           
           {/* Animated Pill Badges */}
@@ -256,22 +389,101 @@ const Profile = () => {
         </div>
 
         {/* Location */}
-        <div className="glass-card">
+        <div className="glass-card relative">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Location
           </label>
-          <input
-            type="text"
-            name="location"
-            value={profile.location}
-            onChange={handleChange}
-            onFocus={() => setFocusedField('location')}
-            onBlur={() => setFocusedField('')}
-            className={`input-field transition-all duration-300 ${
-              focusedField === 'location' ? 'input-glow-blue' : ''
-            }`}
-            placeholder="City, State/Country"
-          />
+          <div className="relative">
+            <input
+              ref={locationInputRef}
+              type="text"
+              name="location"
+              value={profile.location}
+              onChange={(e) => {
+                handleChange(e);
+                // Debounce search
+                if (locationDebounceRef.current) {
+                  clearTimeout(locationDebounceRef.current);
+                }
+                locationDebounceRef.current = setTimeout(() => {
+                  searchLocation(e.target.value);
+                }, 500);
+              }}
+              onFocus={() => {
+                setFocusedField('location');
+                if (profile.location) searchLocation(profile.location);
+              }}
+              onBlur={() => {
+                setFocusedField('');
+                setTimeout(() => {
+                  setLocationSuggestions([]);
+                  setShowLocationMap(false);
+                }, 300);
+              }}
+              className={`input-field pl-10 transition-all duration-300 ${
+                focusedField === 'location' ? 'input-glow-blue' : ''
+              }`}
+              placeholder="Search for a city..."
+            />
+            {/* Map Pin Icon */}
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+              </svg>
+            </div>
+          </div>
+          
+          {/* Location Suggestions Dropdown */}
+          {locationSuggestions.length > 0 && (
+            <div className="absolute z-40 left-0 right-0 mt-2 glass-card-strong bg-white/95 border-2 border-blue-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+              {locationSuggestions.map((suggestion, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => selectLocation(suggestion)}
+                  className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0 flex items-start gap-3"
+                >
+                  <svg className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                  </svg>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {suggestion.address?.city || suggestion.address?.town || suggestion.address?.village || suggestion.name || suggestion.display_name.split(',')[0]}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">{suggestion.display_name}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Mini Map Overlay */}
+          {showLocationMap && selectedPlace && (
+            <div className="absolute z-30 left-0 right-0 mt-2 glass-card-strong bg-white/95 border-2 border-blue-200 rounded-lg shadow-xl p-4 animate-fade-in-up">
+              <div className="bg-gradient-to-br from-blue-100 to-green-100 rounded-lg h-48 flex items-center justify-center relative overflow-hidden">
+                {/* Placeholder Map Pattern */}
+                <div className="absolute inset-0 opacity-20" style={{
+                  backgroundImage: 'repeating-linear-gradient(0deg, #3b82f6 0px, #3b82f6 1px, transparent 1px, transparent 20px), repeating-linear-gradient(90deg, #3b82f6 0px, #3b82f6 1px, transparent 1px, transparent 20px)'
+                }}></div>
+                
+                {/* Location Pin */}
+                <div className="relative z-10 text-center animate-bounce-subtle">
+                  <svg className="w-16 h-16 text-red-500 mx-auto drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                  </svg>
+                  <p className="text-sm font-semibold text-gray-700 mt-2 bg-white/90 px-3 py-1 rounded-full">
+                    {profile.location || 'Search for a location'}
+                  </p>
+                  {selectedPlace && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      📍 {selectedPlace.lat.toFixed(4)}, {selectedPlace.lng.toFixed(4)}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-2 text-center">🗺️ Powered by OpenStreetMap • Free & Open Source</p>
+            </div>
+          )}
         </div>
 
         {/* Monthly Budget with Progress Bar */}
@@ -295,7 +507,7 @@ const Profile = () => {
           />
           
           {/* Budget Progress Bar */}
-          {profile.budgetPreference > 0 && (
+          {profile.budgetPreference > 0 ? (
             <div className="mt-4 animate-fade-in-up">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-semibold text-gray-700">
@@ -330,6 +542,27 @@ const Profile = () => {
                 {getBudgetPercentage() < 50 && '💰 You\'re doing great! Plenty of budget remaining.'}
                 {getBudgetPercentage() >= 50 && getBudgetPercentage() < 80 && '⚠️ You\'ve used over half your budget.'}
                 {getBudgetPercentage() >= 80 && '🚨 Careful! You\'re approaching your budget limit.'}
+              </p>
+            </div>
+          ) : (
+            <div className="mt-4 animate-fade-in-up">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold text-blue-600">
+                  Budget Progress: Set a Goal!
+                </span>
+              </div>
+              
+              {/* Empty Progress Bar */}
+              <div className="relative h-6 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full overflow-hidden shadow-inner">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-xs font-bold text-gray-500">
+                    🎯 Set your monthly budget above
+                  </span>
+                </div>
+              </div>
+              
+              <p className="text-xs text-gray-500 mt-2">
+                💡 Enter a budget amount to start tracking your spending!
               </p>
             </div>
           )}

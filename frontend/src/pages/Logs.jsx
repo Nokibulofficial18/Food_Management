@@ -255,15 +255,15 @@ const Logs = () => {
 
       {/* Dynamic Pie Chart */}
       {chartData.segments.length > 0 && (
-        <div className="glass-card-strong mb-6 bg-gradient-to-br from-white/70 to-purple-100/50 border-2 border-purple-300/40">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">
+        <div className="glass-card-strong mb-6 bg-gradient-to-br from-indigo-400/95 to-purple-500/95 text-white border-2 border-indigo-300/40 shadow-2xl">
+          <h2 className="text-xl font-bold text-white mb-4">
             Consumption Overview {filterCategory !== 'all' && `- ${filterCategory.charAt(0).toUpperCase() + filterCategory.slice(1)}`}
           </h2>
           <div className="flex items-center justify-center gap-8 flex-wrap">
             {/* Pie Chart */}
             <div className="relative">
               <svg width="220" height="220" viewBox="0 0 220 220" className="transform -rotate-90">
-                <circle cx="110" cy="110" r="100" fill="#f3f4f6" />
+                <circle cx="110" cy="110" r="100" fill="white" opacity="0.9" />
                 {chartData.segments.map((segment, index) => {
                   const startAngle = (segment.startAngle * Math.PI) / 180;
                   const endAngle = (segment.endAngle * Math.PI) / 180;
@@ -292,8 +292,8 @@ const Logs = () => {
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-gray-900">{chartData.total.toFixed(1)}</div>
-                  <div className="text-sm text-gray-600">Total Units</div>
+                  <div className="text-3xl font-bold text-indigo-600">{chartData.total.toFixed(1)}</div>
+                  <div className="text-sm text-gray-700 font-semibold">Total Units</div>
                 </div>
               </div>
             </div>
@@ -303,22 +303,22 @@ const Logs = () => {
               {chartData.segments.map((segment) => (
                 <div 
                   key={segment.category}
-                  className={`flex items-center gap-2 p-2 rounded-lg transition-all cursor-pointer ${
-                    filterCategory === segment.category ? 'bg-gray-100 ring-2 ring-gray-300' : 'hover:bg-gray-50'
+                  className={`flex items-center gap-2 p-2 rounded-lg transition-all cursor-pointer bg-white/90 backdrop-blur-sm border-2 ${
+                    filterCategory === segment.category ? 'border-white shadow-lg scale-105' : 'border-white/40 hover:border-white/70 hover:shadow-md'
                   }`}
                   onClick={() => setFilterCategory(segment.category)}
                 >
                   <div 
-                    className="w-4 h-4 rounded-full" 
+                    className="w-4 h-4 rounded-full shadow-sm" 
                     style={{ backgroundColor: segment.color }}
                   ></div>
                   <div>
-                    <div className="text-sm font-semibold text-gray-900 capitalize flex items-center gap-1">
+                    <div className="text-sm font-bold text-gray-800 capitalize flex items-center gap-1">
                       {getCategoryEmoji(segment.category)}
                       {segment.category}
                     </div>
-                    <div className="text-xs text-gray-600">
-                      {segment.value.toFixed(1)} units ({segment.percentage.toFixed(1)}%)
+                    <div className="text-xs text-gray-700 font-semibold">
+                      {segment.value.toFixed(1)} units • {segment.percentage.toFixed(1)}%
                     </div>
                   </div>
                 </div>
@@ -329,12 +329,12 @@ const Logs = () => {
       )}
 
       {/* Vertical Timeline */}
-      <div className="glass-card-strong bg-gradient-to-br from-white/70 to-blue-100/50 border-2 border-blue-300/40">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Timeline</h2>
+      <div className="glass-card-strong bg-gradient-to-br from-blue-400/95 to-cyan-500/95 text-white border-2 border-blue-300/40 shadow-2xl">
+        <h2 className="text-xl font-bold text-white mb-6">Timeline</h2>
         {filteredLogs.length > 0 ? (
           <div className="relative max-h-[600px] overflow-y-auto smooth-scroll">
             {/* Timeline Line */}
-            <div className="absolute left-8 top-0 bottom-0 w-1 bg-gradient-to-b from-primary-400 via-primary-300 to-transparent"></div>
+            <div className="absolute left-8 top-0 bottom-0 w-1 bg-gradient-to-b from-white via-cyan-200 to-transparent rounded-full shadow-sm"></div>
             
             {/* Timeline Entries */}
             <div className="space-y-6">
@@ -353,14 +353,14 @@ const Logs = () => {
                     {/* Sticky Date Marker */}
                     <div className="absolute left-0 top-0 z-10">
                       <div className="sticky top-4">
-                        <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-lg border-4 border-white transition-all duration-300 ${
-                          isToday ? 'bg-gradient-to-br from-green-400 to-green-600 scale-110 animate-pulse-subtle' : 'bg-gradient-to-br from-primary-400 to-primary-600'
+                        <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-lg border-4 border-white/50 transition-all duration-300 ${
+                          isToday ? 'bg-gradient-to-br from-green-400 to-green-500 scale-110 animate-pulse-subtle' : 'bg-white/90 backdrop-blur-sm'
                         } group-hover:scale-125`}>
                           {getCategoryEmoji(log.category)}
                         </div>
                         {/* Date Badge */}
-                        <div className={`absolute -bottom-2 left-1/2 transform -translate-x-1/2 px-2 py-1 rounded text-xs font-bold shadow-sm whitespace-nowrap ${
-                          isToday ? 'bg-green-500 text-white' : 'bg-primary-100 text-primary-700'
+                        <div className={`absolute -bottom-2 left-1/2 transform -translate-x-1/2 px-2 py-1 rounded text-xs font-bold shadow-md whitespace-nowrap backdrop-blur-sm ${
+                          isToday ? 'bg-green-500 text-white' : 'bg-white/90 text-cyan-700'
                         }`}>
                           {getTimeAgo(log.date)}
                         </div>
@@ -369,7 +369,7 @@ const Logs = () => {
 
                     {/* Log Card */}
                     <div 
-                      className="bg-gradient-to-r from-white to-gray-50 rounded-xl p-5 border-2 border-gray-200 group-hover:border-primary-400 group-hover:shadow-xl transition-all duration-300 transform group-hover:-translate-y-1 cursor-pointer"
+                      className="bg-white/90 backdrop-blur-sm rounded-xl p-5 border-2 border-cyan-200/50 group-hover:border-white group-hover:shadow-2xl transition-all duration-300 transform group-hover:-translate-y-1 cursor-pointer"
                       onClick={() => setSelectedLog(log)}
                     >
                       <div className="flex items-start justify-between mb-3">
@@ -430,13 +430,19 @@ const Logs = () => {
       </div>
 
       {/* Floating Action Button (FAB) */}
-      <button
-        onClick={() => setShowQuickAdd(true)}
-        className="fixed bottom-8 right-8 w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 text-white rounded-full shadow-2xl flex items-center justify-center text-2xl font-bold hover:scale-110 active:scale-95 transition-all duration-300 z-50 animate-bounce-subtle"
-        aria-label="Add Log"
-      >
-        <span className="text-3xl">+</span>
-      </button>
+      <div className="fixed bottom-8 right-8 z-50">
+        <button
+          onClick={() => setShowQuickAdd(true)}
+          className="relative w-20 h-20 bg-gradient-to-br from-green-400 to-green-500 text-white rounded-full shadow-2xl hover:shadow-green-400/50 flex items-center justify-center text-3xl font-bold hover:scale-110 active:scale-95 transition-all duration-300 border-4 border-white group"
+          aria-label="Add Log"
+        >
+          <span className="text-4xl group-hover:rotate-90 transition-transform duration-300">+</span>
+          {/* FAB Label */}
+          <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg animate-pulse">
+            Add Log
+          </div>
+        </button>
+      </div>
 
       {/* Quick Add Modal */}
       {showQuickAdd && (

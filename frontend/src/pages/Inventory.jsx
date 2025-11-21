@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { inventoryAPI } from '../api';
+import { inventoryAPI, consumptionAPI } from '../api';
 
 const Inventory = () => {
   const [items, setItems] = useState([]);
@@ -130,19 +130,43 @@ const Inventory = () => {
     try {
       switch (action) {
         case 'consume':
-          // Log consumption and optionally delete
-          alert(`Consumed: ${draggedItem.itemName}`);
-          // You can implement actual consumption logging here
+          // Log consumption
+          await consumptionAPI.createLog({
+            itemId: draggedItem._id,
+            itemName: draggedItem.itemName,
+            category: draggedItem.category,
+            quantity: draggedItem.quantity,
+            consumptionType: 'consumed',
+            date: new Date().toISOString()
+          });
+          // Remove from inventory
           await inventoryAPI.deleteItem(draggedItem._id);
+          alert(`✅ ${draggedItem.itemName} consumed and logged!`);
           break;
         case 'waste':
           // Log as waste
-          alert(`Logged as waste: ${draggedItem.itemName}`);
+          await consumptionAPI.createLog({
+            itemId: draggedItem._id,
+            itemName: draggedItem.itemName,
+            category: draggedItem.category,
+            quantity: draggedItem.quantity,
+            consumptionType: 'wasted',
+            date: new Date().toISOString()
+          });
+          // Remove from inventory
           await inventoryAPI.deleteItem(draggedItem._id);
+          alert(`🗑️ ${draggedItem.itemName} logged as waste`);
           break;
         case 'freeze':
-          // Update expiration or mark as frozen
-          alert(`Frozen: ${draggedItem.itemName}`);
+          // Extend expiration date by 90 days for freezing
+          const currentExpDate = new Date(draggedItem.expirationDate);
+          const newExpDate = new Date(currentExpDate.setDate(currentExpDate.getDate() + 90));
+          
+          await inventoryAPI.updateItem(draggedItem._id, {
+            expirationDate: newExpDate.toISOString().split('T')[0],
+            notes: `${draggedItem.notes ? draggedItem.notes + ' | ' : ''}❄️ Frozen on ${new Date().toLocaleDateString()}`
+          });
+          alert(`❄️ ${draggedItem.itemName} frozen! Expiration extended by 90 days`);
           break;
         default:
           break;
@@ -150,6 +174,7 @@ const Inventory = () => {
       loadInventory();
     } catch (error) {
       console.error('Failed to process action:', error);
+      alert('❌ Action failed. Please try again.');
     }
     
     setDraggedItem(null);

@@ -5,6 +5,7 @@ import FoodItem from '../models/FoodItem.js';
 import Resource from '../models/Resource.js';
 import User from '../models/User.js';
 import InventoryItem from '../models/InventoryItem.js';
+import ConsumptionLog from '../models/ConsumptionLog.js';
 
 dotenv.config();
 
@@ -512,6 +513,7 @@ const seedDatabase = async () => {
     await Resource.deleteMany({});
     await User.deleteMany({});
     await InventoryItem.deleteMany({});
+    await ConsumptionLog.deleteMany({});
     console.log('🗑️  Cleared existing data');
 
     // Create demo users
@@ -680,8 +682,130 @@ const seedDatabase = async () => {
 
     await InventoryItem.insertMany(sampleInventory);
     console.log(`✅ Inserted ${sampleInventory.length} inventory items for demo user`);
-    await InventoryItem.insertMany(sampleInventory);
-    console.log(`✅ Inserted ${sampleInventory.length} inventory items for demo user`);
+
+    // Create comprehensive consumption logs for heatmap visualization
+    const consumptionLogs = [];
+    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    
+    // Generate logs for the past 2 weeks to ensure good heatmap data
+    for (let weekOffset = 0; weekOffset < 2; weekOffset++) {
+      for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+        const daysAgo = (weekOffset * 7) + (6 - dayIndex);
+        const logDate = new Date(today.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+        
+        // Sunday - Light breakfast and dinner
+        if (dayIndex === 0) {
+          consumptionLogs.push(
+            { userId: demoUser._id, itemName: 'Pancakes', category: 'grain', quantity: 2, date: logDate, notes: 'Sunday brunch' },
+            { userId: demoUser._id, itemName: 'Orange Juice', category: 'beverage', quantity: 1, date: logDate, notes: 'With breakfast' },
+            { userId: demoUser._id, itemName: 'Bacon', category: 'protein', quantity: 3, date: logDate, notes: 'Sunday breakfast' },
+            { userId: demoUser._id, itemName: 'Strawberries', category: 'fruit', quantity: 1, date: logDate, notes: 'On pancakes' },
+            { userId: demoUser._id, itemName: 'Grilled Chicken', category: 'protein', quantity: 1, date: logDate, notes: 'Sunday dinner' },
+            { userId: demoUser._id, itemName: 'Caesar Salad', category: 'vegetable', quantity: 2, date: logDate, notes: 'Side dish' }
+          );
+        }
+        
+        // Monday - Busy weekday, less variety
+        if (dayIndex === 1) {
+          consumptionLogs.push(
+            { userId: demoUser._id, itemName: 'Oatmeal', category: 'grain', quantity: 1, date: logDate, notes: 'Quick breakfast' },
+            { userId: demoUser._id, itemName: 'Banana', category: 'fruit', quantity: 1, date: logDate, notes: 'In oatmeal' },
+            { userId: demoUser._id, itemName: 'Coffee', category: 'beverage', quantity: 2, date: logDate, notes: 'Morning boost' },
+            { userId: demoUser._id, itemName: 'Turkey Sandwich', category: 'protein', quantity: 1, date: logDate, notes: 'Lunch' },
+            { userId: demoUser._id, itemName: 'Bread', category: 'grain', quantity: 2, date: logDate, notes: 'For sandwich' },
+            { userId: demoUser._id, itemName: 'Lettuce', category: 'vegetable', quantity: 1, date: logDate, notes: 'On sandwich' },
+            { userId: demoUser._id, itemName: 'Spaghetti', category: 'grain', quantity: 2, date: logDate, notes: 'Dinner pasta' },
+            { userId: demoUser._id, itemName: 'Tomato Sauce', category: 'vegetable', quantity: 1, date: logDate, notes: 'Pasta sauce' }
+          );
+        }
+        
+        // Tuesday - Balanced meals
+        if (dayIndex === 2) {
+          consumptionLogs.push(
+            { userId: demoUser._id, itemName: 'Greek Yogurt', category: 'dairy', quantity: 1, date: logDate, notes: 'Breakfast yogurt' },
+            { userId: demoUser._id, itemName: 'Granola', category: 'snack', quantity: 1, date: logDate, notes: 'With yogurt' },
+            { userId: demoUser._id, itemName: 'Blueberries', category: 'fruit', quantity: 1, date: logDate, notes: 'Yogurt topping' },
+            { userId: demoUser._id, itemName: 'Coffee', category: 'beverage', quantity: 1, date: logDate, notes: 'Morning coffee' },
+            { userId: demoUser._id, itemName: 'Chicken Salad', category: 'protein', quantity: 2, date: logDate, notes: 'Lunch salad' },
+            { userId: demoUser._id, itemName: 'Mixed Greens', category: 'vegetable', quantity: 2, date: logDate, notes: 'Salad base' },
+            { userId: demoUser._id, itemName: 'Carrots', category: 'vegetable', quantity: 1, date: logDate, notes: 'In salad' },
+            { userId: demoUser._id, itemName: 'Salmon', category: 'protein', quantity: 1, date: logDate, notes: 'Dinner protein' },
+            { userId: demoUser._id, itemName: 'Broccoli', category: 'vegetable', quantity: 2, date: logDate, notes: 'Steamed side' },
+            { userId: demoUser._id, itemName: 'Rice', category: 'grain', quantity: 1, date: logDate, notes: 'With salmon' }
+          );
+        }
+        
+        // Wednesday - High snacking day
+        if (dayIndex === 3) {
+          consumptionLogs.push(
+            { userId: demoUser._id, itemName: 'Eggs', category: 'protein', quantity: 2, date: logDate, notes: 'Scrambled eggs' },
+            { userId: demoUser._id, itemName: 'Toast', category: 'grain', quantity: 2, date: logDate, notes: 'With eggs' },
+            { userId: demoUser._id, itemName: 'Orange Juice', category: 'beverage', quantity: 1, date: logDate, notes: 'Breakfast drink' },
+            { userId: demoUser._id, itemName: 'Apple', category: 'fruit', quantity: 1, date: logDate, notes: 'Mid-morning snack' },
+            { userId: demoUser._id, itemName: 'Chips', category: 'snack', quantity: 1, date: logDate, notes: 'Afternoon snack' },
+            { userId: demoUser._id, itemName: 'Granola Bar', category: 'snack', quantity: 2, date: logDate, notes: 'Energy boost' },
+            { userId: demoUser._id, itemName: 'Cheese', category: 'dairy', quantity: 1, date: logDate, notes: 'Snack cheese' },
+            { userId: demoUser._id, itemName: 'Crackers', category: 'snack', quantity: 2, date: logDate, notes: 'With cheese' },
+            { userId: demoUser._id, itemName: 'Burrito', category: 'protein', quantity: 1, date: logDate, notes: 'Dinner wrap' },
+            { userId: demoUser._id, itemName: 'Tortillas', category: 'grain', quantity: 2, date: logDate, notes: 'Burrito wrap' }
+          );
+        }
+        
+        // Thursday - Healthy eating day
+        if (dayIndex === 4) {
+          consumptionLogs.push(
+            { userId: demoUser._id, itemName: 'Smoothie Bowl', category: 'fruit', quantity: 2, date: logDate, notes: 'Breakfast bowl' },
+            { userId: demoUser._id, itemName: 'Banana', category: 'fruit', quantity: 1, date: logDate, notes: 'In smoothie' },
+            { userId: demoUser._id, itemName: 'Strawberries', category: 'fruit', quantity: 1, date: logDate, notes: 'Smoothie topping' },
+            { userId: demoUser._id, itemName: 'Yogurt', category: 'dairy', quantity: 1, date: logDate, notes: 'Smoothie base' },
+            { userId: demoUser._id, itemName: 'Green Tea', category: 'beverage', quantity: 2, date: logDate, notes: 'Healthy drink' },
+            { userId: demoUser._id, itemName: 'Quinoa Bowl', category: 'grain', quantity: 2, date: logDate, notes: 'Lunch bowl' },
+            { userId: demoUser._id, itemName: 'Tofu', category: 'protein', quantity: 2, date: logDate, notes: 'Plant protein' },
+            { userId: demoUser._id, itemName: 'Bell Peppers', category: 'vegetable', quantity: 2, date: logDate, notes: 'In bowl' },
+            { userId: demoUser._id, itemName: 'Spinach', category: 'vegetable', quantity: 2, date: logDate, notes: 'Leafy greens' },
+            { userId: demoUser._id, itemName: 'Grilled Fish', category: 'protein', quantity: 1, date: logDate, notes: 'Dinner protein' },
+            { userId: demoUser._id, itemName: 'Asparagus', category: 'vegetable', quantity: 2, date: logDate, notes: 'Grilled veggie' }
+          );
+        }
+        
+        // Friday - Pizza night / Weekend prep
+        if (dayIndex === 5) {
+          consumptionLogs.push(
+            { userId: demoUser._id, itemName: 'Cereal', category: 'grain', quantity: 1, date: logDate, notes: 'Quick breakfast' },
+            { userId: demoUser._id, itemName: 'Milk', category: 'dairy', quantity: 1, date: logDate, notes: 'With cereal' },
+            { userId: demoUser._id, itemName: 'Orange', category: 'fruit', quantity: 1, date: logDate, notes: 'Morning fruit' },
+            { userId: demoUser._id, itemName: 'Coffee', category: 'beverage', quantity: 2, date: logDate, notes: 'Friday caffeine' },
+            { userId: demoUser._id, itemName: 'Leftover Rice', category: 'grain', quantity: 1, date: logDate, notes: 'Quick lunch' },
+            { userId: demoUser._id, itemName: 'Pizza', category: 'grain', quantity: 3, date: logDate, notes: 'Friday night pizza' },
+            { userId: demoUser._id, itemName: 'Soda', category: 'beverage', quantity: 1, date: logDate, notes: 'Weekend treat' },
+            { userId: demoUser._id, itemName: 'Ice Cream', category: 'snack', quantity: 1, date: logDate, notes: 'Dessert' }
+          );
+        }
+        
+        // Saturday - High consumption day, meal prep
+        if (dayIndex === 6) {
+          consumptionLogs.push(
+            { userId: demoUser._id, itemName: 'French Toast', category: 'grain', quantity: 2, date: logDate, notes: 'Weekend breakfast' },
+            { userId: demoUser._id, itemName: 'Eggs', category: 'protein', quantity: 2, date: logDate, notes: 'In french toast' },
+            { userId: demoUser._id, itemName: 'Milk', category: 'dairy', quantity: 1, date: logDate, notes: 'Breakfast drink' },
+            { userId: demoUser._id, itemName: 'Maple Syrup', category: 'snack', quantity: 1, date: logDate, notes: 'On toast' },
+            { userId: demoUser._id, itemName: 'Grapes', category: 'fruit', quantity: 1, date: logDate, notes: 'Side fruit' },
+            { userId: demoUser._id, itemName: 'Burger', category: 'protein', quantity: 2, date: logDate, notes: 'Lunch burger' },
+            { userId: demoUser._id, itemName: 'Buns', category: 'grain', quantity: 2, date: logDate, notes: 'Burger buns' },
+            { userId: demoUser._id, itemName: 'Lettuce', category: 'vegetable', quantity: 1, date: logDate, notes: 'Burger topping' },
+            { userId: demoUser._id, itemName: 'Tomatoes', category: 'vegetable', quantity: 1, date: logDate, notes: 'On burger' },
+            { userId: demoUser._id, itemName: 'Cheese', category: 'dairy', quantity: 1, date: logDate, notes: 'Cheeseburger' },
+            { userId: demoUser._id, itemName: 'Fries', category: 'snack', quantity: 2, date: logDate, notes: 'Side order' },
+            { userId: demoUser._id, itemName: 'Steak', category: 'protein', quantity: 2, date: logDate, notes: 'Saturday dinner' },
+            { userId: demoUser._id, itemName: 'Potatoes', category: 'vegetable', quantity: 2, date: logDate, notes: 'Mashed potatoes' },
+            { userId: demoUser._id, itemName: 'Green Beans', category: 'vegetable', quantity: 2, date: logDate, notes: 'Veggie side' }
+          );
+        }
+      }
+    }
+
+    await ConsumptionLog.insertMany(consumptionLogs);
+    console.log(`✅ Inserted ${consumptionLogs.length} consumption logs for heatmap visualization`);
 
     console.log('🎉 Database seeded successfully!');
     console.log('📧 Login credentials:');

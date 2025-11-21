@@ -9,6 +9,8 @@ import Profile from './pages/Profile';
 import Logs from './pages/Logs';
 import Inventory from './pages/Inventory';
 import Resources from './pages/Resources';
+import Analysis from './pages/Analysis';
+import MealPlanner from './pages/MealPlanner';
 
 function App() {
   return (
@@ -68,6 +70,28 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <Resources />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/analysis"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Analysis />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/meal-planner"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <MealPlanner />
                 </Layout>
               </ProtectedRoute>
             }
