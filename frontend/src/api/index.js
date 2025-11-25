@@ -67,7 +67,9 @@ export const analysisAPI = {
 // AI Meal Optimization API
 export const aiAPI = {
   optimizeMealPlan: (data) => api.post('/ai/meal-optimize', data),
-  getMealSuggestions: (data) => api.post('/ai/meal-suggestions', data)
+  getMealSuggestions: (data) => api.post('/ai/meal-suggestions', data),
+  getExpirationRisk: () => api.get('/ai/exp-risk'),
+  getWasteEstimate: () => api.get('/ai/waste-estimate')
 };
 
 // OCR API
@@ -81,5 +83,15 @@ export const ocrAPI = {
   },
   confirmItems: (items) => api.post('/ocr/confirm-items', { items }),
   getInfo: () => api.get('/ocr/info')
+};
+
+// Chatbot API
+export const chatbotAPI = {
+  sendMessage: (data) => api.post('/chatbot/message', data),
+  getConversation: (sessionId) => api.get(`/chatbot/conversation/${sessionId}`),
+  getConversations: (limit) => api.get('/chatbot/conversations', { params: { limit } }),
+  createConversation: () => api.post('/chatbot/conversation'),
+  deleteConversation: (sessionId) => api.delete(`/chatbot/conversation/${sessionId}`),
+  getInfo: () => api.get('/chatbot/info')
 };
 

@@ -2,7 +2,9 @@ import express from 'express';
 import { authenticate } from '../middleware/auth.js';
 import { 
   optimizeMealPlan,
-  getMealSuggestions
+  getMealSuggestions,
+  getExpirationRisk,
+  getWasteEstimate
 } from '../controllers/aiController.js';
 
 const router = express.Router();
@@ -22,5 +24,19 @@ router.post('/meal-optimize', authenticate, optimizeMealPlan);
  * @body    { mealType: String, budget: Number, preferences: Object }
  */
 router.post('/meal-suggestions', authenticate, getMealSuggestions);
+
+/**
+ * @route   GET /api/ai/exp-risk
+ * @desc    Get expiration risk predictions for inventory items
+ * @access  Private
+ */
+router.get('/exp-risk', authenticate, getExpirationRisk);
+
+/**
+ * @route   GET /api/ai/waste-estimate
+ * @desc    Get waste estimation with community comparison
+ * @access  Private
+ */
+router.get('/waste-estimate', authenticate, getWasteEstimate);
 
 export default router;

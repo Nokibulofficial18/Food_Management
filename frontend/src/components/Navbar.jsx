@@ -11,9 +11,12 @@ const Navbar = () => {
     { path: '/dashboard', label: 'Dashboard', icon: '📊' },
     { path: '/logs', label: 'Logs', icon: '📝' },
     { path: '/inventory', label: 'Inventory', icon: '📦' },
+    { path: '/expiration-risk', label: 'Expiration Risk', icon: '⚠️' },
+    { path: '/waste-estimate', label: 'Waste Estimate', icon: '🗑️' },
+    { path: '/nourishbot', label: 'NourishBot', icon: '🤖' },
     { path: '/ocr-scanner', label: 'OCR Scanner', icon: '📸' },
     { path: '/meal-planner', label: 'Meal Planner', icon: '🍽️' },
-    { path: '/analysis', label: 'AI Analysis', icon: '🤖' },
+    { path: '/analysis', label: 'AI Analysis', icon: '🧠' },
     { path: '/resources', label: 'Resources', icon: '📚' },
     { path: '/profile', label: 'Profile', icon: '👤' }
   ];

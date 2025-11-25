@@ -1,7 +1,15 @@
 import InventoryItem from '../models/InventoryItem.js';
 import FoodItem from '../models/FoodItem.js';
+import ConsumptionLog from '../models/ConsumptionLog.js';
 import { generateMealSuggestions, optimizeMealPlan as llmOptimize } from '../services/llmService.js';
 import { getPrice, getCheaperAlternatives, calculateNutrition } from '../data/localPrices.js';
+import { 
+  calculateRiskScore, 
+  getRiskLevel, 
+  generateRecommendations,
+  sortByRisk 
+} from '../services/expirationRiskService.js';
+import { estimateWaste } from '../services/wasteEstimationService.js';
 
 /**
  * Nutrition rules for meal planning
@@ -472,3 +480,270 @@ export const getMealSuggestions = async (req, res) => {
     });
   }
 };
+
+/**
+ * @desc    Get expiration risk predictions for inventory
+ * @route   GET /api/ai/exp-risk
+ * @access  Private
+ */
+export const getExpirationRisk = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // 1. Fetch user's inventory
+    const inventory = await InventoryItem.find({ userId }).lean();
+
+    if (!inventory || inventory.length === 0) {
+      return res.json({
+        message: 'No inventory items found',
+        prioritizedInventory: [],
+        summary: {
+          totalItems: 0,
+          criticalItems: 0,
+          highRiskItems: 0,
+          mediumRiskItems: 0,
+          lowRiskItems: 0
+        }
+      });
+    }
+
+    // 2. Fetch user's consumption history (last 90 days for pattern analysis)
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+    const consumptionLogs = await ConsumptionLog.find({
+      userId,
+      date: { $gte: ninetyDaysAgo }
+    }).lean();
+
+    // 3. Calculate risk score for each item
+    const inventoryWithRisk = inventory.map(item => {
+      const riskData = calculateRiskScore(item, consumptionLogs);
+      const riskLevel = getRiskLevel(riskData.riskScore);
+      const recommendations = generateRecommendations(item, riskData);
+
+      return {
+        // Original item data
+        id: item._id,
+        itemName: item.itemName,
+        category: item.category,
+        quantity: item.quantity,
+        purchaseDate: item.purchaseDate,
+        expirationDate: item.expirationDate,
+        notes: item.notes,
+
+        // Risk analysis
+        riskScore: riskData.riskScore,
+        riskLevel: riskLevel.level,
+        riskColor: riskLevel.color,
+        priority: riskLevel.priority,
+        alert: riskLevel.alert,
+        icon: riskLevel.icon,
+
+        // Detailed metrics
+        daysUntilExpiration: riskData.daysUntilExpiration,
+        isExpired: riskData.isExpired,
+        consumptionFrequency: riskData.consumptionFrequency,
+
+        // Breakdown
+        riskBreakdown: riskData.breakdown,
+
+        // Recommendations
+        recommendations: recommendations,
+        topRecommendation: recommendations[0] || null
+      };
+    });
+
+    // 4. Sort by risk score (highest first)
+    const prioritizedInventory = sortByRisk(inventoryWithRisk);
+
+    // 5. Generate summary statistics
+    const summary = {
+      totalItems: prioritizedInventory.length,
+      criticalItems: prioritizedInventory.filter(i => i.riskLevel === 'critical').length,
+      highRiskItems: prioritizedInventory.filter(i => i.riskLevel === 'high').length,
+      mediumRiskItems: prioritizedInventory.filter(i => i.riskLevel === 'medium').length,
+      lowRiskItems: prioritizedInventory.filter(i => i.riskLevel === 'low').length,
+      minimalRiskItems: prioritizedInventory.filter(i => i.riskLevel === 'minimal').length,
+      expiredItems: prioritizedInventory.filter(i => i.isExpired).length,
+      averageRiskScore: Math.round(
+        prioritizedInventory.reduce((sum, item) => sum + item.riskScore, 0) / 
+        prioritizedInventory.length
+      ),
+      itemsExpiringSoon: prioritizedInventory.filter(
+        i => !i.isExpired && i.daysUntilExpiration <= 3
+      ).length
+    };
+
+    // 6. Generate alerts for high-risk items
+    const alerts = prioritizedInventory
+      .filter(item => item.riskScore >= 60)
+      .map(item => ({
+        itemId: item.id,
+        itemName: item.itemName,
+        category: item.category,
+        riskScore: item.riskScore,
+        riskLevel: item.riskLevel,
+        alert: item.alert,
+        icon: item.icon,
+        daysUntilExpiration: item.daysUntilExpiration,
+        action: item.topRecommendation?.message || 'Use or discard soon'
+      }));
+
+    // 7. Generate category-wise risk breakdown
+    const categoryRisk = {};
+    prioritizedInventory.forEach(item => {
+      if (!categoryRisk[item.category]) {
+        categoryRisk[item.category] = {
+          totalItems: 0,
+          averageRisk: 0,
+          highRiskCount: 0,
+          items: []
+        };
+      }
+      categoryRisk[item.category].totalItems += 1;
+      categoryRisk[item.category].averageRisk += item.riskScore;
+      if (item.riskScore >= 60) {
+        categoryRisk[item.category].highRiskCount += 1;
+      }
+    });
+
+    // Calculate averages
+    Object.keys(categoryRisk).forEach(category => {
+      categoryRisk[category].averageRisk = Math.round(
+        categoryRisk[category].averageRisk / categoryRisk[category].totalItems
+      );
+    });
+
+    // 8. Generate seasonal insights
+    const currentMonth = new Date().getMonth();
+    const isSummerSeason = currentMonth >= 4 && currentMonth <= 8;
+    
+    const seasonalInsight = isSummerSeason
+      ? {
+          season: 'summer',
+          message: 'Warm weather increases spoilage risk for perishables. Monitor fruits, vegetables, and proteins closely.',
+          affectedCategories: ['fruit', 'vegetable', 'protein', 'dairy'],
+          recommendation: 'Consider refrigerating items and consuming perishables faster.'
+        }
+      : {
+          season: 'winter',
+          message: 'Cool weather helps preserve perishables. Lower risk for most items.',
+          affectedCategories: [],
+          recommendation: 'Maintain regular monitoring of expiration dates.'
+        };
+
+    res.json({
+      prioritizedInventory,
+      alerts,
+      summary,
+      categoryRisk: Object.entries(categoryRisk)
+        .map(([category, data]) => ({ category, ...data }))
+        .sort((a, b) => b.averageRisk - a.averageRisk),
+      seasonalInsight,
+      metadata: {
+        analyzedAt: new Date(),
+        consumptionLogsAnalyzed: consumptionLogs.length,
+        timeRange: '90 days'
+      }
+    });
+
+  } catch (error) {
+    console.error('Expiration risk prediction error:', error);
+    res.status(500).json({ 
+      message: 'Failed to calculate expiration risk', 
+      error: error.message 
+    });
+  }
+};
+
+/**
+ * @desc    Get waste estimation with community comparison
+ * @route   GET /api/ai/waste-estimate
+ * @access  Private
+ */
+export const getWasteEstimate = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // 1. Fetch user's inventory
+    const inventory = await InventoryItem.find({ userId }).lean();
+
+    if (!inventory || inventory.length === 0) {
+      return res.json({
+        message: 'No inventory items found',
+        weeklyWaste: { grams: 0, money: 0, itemCount: 0 },
+        monthlyWaste: { grams: 0, money: 0, itemCount: 0 },
+        communityComparison: null,
+        categoryBreakdown: {},
+        recommendations: []
+      });
+    }
+
+    // 2. Fetch consumption logs (last 90 days for comprehensive analysis)
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+    const consumptionLogs = await ConsumptionLog.find({
+      userId,
+      date: { $gte: ninetyDaysAgo }
+    }).lean();
+
+    // 3. Estimate waste using the service
+    const wasteEstimation = estimateWaste(inventory, consumptionLogs);
+
+    // 4. Format response
+    res.json({
+      weeklyWaste: wasteEstimation.weeklyWaste,
+      monthlyWaste: wasteEstimation.monthlyWaste,
+      categoryBreakdown: Object.entries(wasteEstimation.categoryBreakdown)
+        .map(([category, data]) => ({
+          category,
+          ...data,
+          grams: Math.round(data.grams),
+          money: parseFloat(data.money.toFixed(2))
+        }))
+        .filter(cat => cat.grams > 0) // Only include categories with waste
+        .sort((a, b) => b.grams - a.grams), // Sort by waste amount
+      communityComparison: wasteEstimation.communityComparison,
+      recommendations: wasteEstimation.recommendations,
+      insights: {
+        topWastedCategory: Object.entries(wasteEstimation.categoryBreakdown)
+          .sort((a, b) => b[1].grams - a[1].grams)[0]?.[0] || 'none',
+        wastePerDay: {
+          grams: Math.round(wasteEstimation.monthlyWaste.grams / 30),
+          money: parseFloat((wasteEstimation.monthlyWaste.money / 30).toFixed(2))
+        },
+        yearlyProjection: {
+          grams: Math.round(wasteEstimation.monthlyWaste.grams * 12),
+          money: parseFloat((wasteEstimation.monthlyWaste.money * 12).toFixed(2))
+        },
+        wasteByType: {
+          actual: {
+            grams: wasteEstimation.weeklyWaste.actual.grams,
+            money: wasteEstimation.weeklyWaste.actual.money,
+            percentage: wasteEstimation.weeklyWaste.grams > 0 
+              ? Math.round((wasteEstimation.weeklyWaste.actual.grams / wasteEstimation.weeklyWaste.grams) * 100)
+              : 0
+          },
+          predicted: {
+            grams: wasteEstimation.weeklyWaste.predicted.grams,
+            money: wasteEstimation.weeklyWaste.predicted.money,
+            percentage: wasteEstimation.weeklyWaste.grams > 0
+              ? Math.round((wasteEstimation.weeklyWaste.predicted.grams / wasteEstimation.weeklyWaste.grams) * 100)
+              : 0
+          }
+        }
+      },
+      metadata: wasteEstimation.metadata
+    });
+
+  } catch (error) {
+    console.error('Waste estimation error:', error);
+    res.status(500).json({ 
+      message: 'Failed to estimate waste', 
+      error: error.message 
+    });
+  }
+};
+

@@ -12,6 +12,9 @@ import Resources from './pages/Resources';
 import Analysis from './pages/Analysis';
 import MealPlanner from './pages/MealPlanner';
 import OCRScanner from './pages/OCRScanner';
+import ExpirationRisk from './pages/ExpirationRisk';
+import NourishBot from './pages/NourishBot';
+import WasteEstimate from './pages/WasteEstimate';
 
 function App() {
   return (
@@ -104,6 +107,39 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <OCRScanner />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/expiration-risk"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ExpirationRisk />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/waste-estimate"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <WasteEstimate />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/nourishbot"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <NourishBot />
                 </Layout>
               </ProtectedRoute>
             }
